@@ -8,9 +8,30 @@ func _init(_steam_registry_path):
 enum SteamPathDetection {
 	INVALID_REGISTRY_PATH = 0,
 	INCORRECT_VALUE = 1,
-	STEAM_NOT_FOUND = 2
+	STEAM_NOT_FOUND = 2,
+	CANT_FIND_GAMES = 3,
 }
 
+func get_games_path():
+	var steam_path = await windows_get_steam_path()
+	
+	var steamapps_path = steam_path.path_join("steamapps")
+		
+	if not DirAccess.dir_exists_absolute(steam_path):
+		return SteamPathDetection.STEAM_NOT_FOUND
+	
+	var dir_access = DirAccess.open(steamapps_path)
+	if not dir_access.file_exists("libraryfolders.vdf"):
+		return SteamPathDetection.CANT_FIND_GAMES
+	
+	var library_folder_file = FileAccess.open(steamapps_path.path_join("libraryfolders.vdf"), FileAccess.READ)
+	var vdf_data = library_folder_file.get_as_text()
+	library_folder_file.close()
+	
+	var parsed = VdfParser.new().parse_vdf(vdf_data)
+	
+	return parsed
+	
 # On Windows, return the Steam installation folder path
 func windows_get_steam_path():
 	var out = []
@@ -37,4 +58,3 @@ func windows_get_steam_path():
 		return path.get_string()
 	
 	return SteamPathDetection.INCORRECT_VALUE
-	

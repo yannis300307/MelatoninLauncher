@@ -8,7 +8,7 @@ enum ParsingError {
 }
 
 # A recursive basic and unsafe parser of Valve Data Format (VDF) made from my understanding of it
-func parse_vdf_expression(vdf: String):
+func parse_vdf(vdf: String):
 	var result = get_tokens(vdf)
 	
 	match result[0]:
