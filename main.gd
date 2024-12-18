@@ -8,12 +8,34 @@ enum SteamPathDetection {
 	STEAM_NOT_FOUND = 2
 }
 
+var expr = """
+"key1" "value1"
+"key2" "value2"
+"key3"
+{
+	"key4" "value3"
+	"key4" "value4"
+	"key5"
+	{
+		"key6"
+		{
+			"key7" "value5"
+		}
+	}
+}
+"key8" "value6"
+"key9"
+{
+	"key10" "value7"
+}
+"""
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	print("Steam installation path:")
-	print(await windows_get_steam_path())
-
+	#print("Steam installation path:")
+	#print(await windows_get_steam_path())
+	
+	print(VdfParser.new().parse_vdf_expression(expr))
 
 # On Windows, return the Steam installation folder path
 func windows_get_steam_path():
