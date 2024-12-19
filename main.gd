@@ -9,7 +9,11 @@ func _ready() -> void:
 	#print(await windows_get_steam_path())
 	var steam_utils = SteamUtils.new(steam_registry_path)
 	for i in await steam_utils.get_games_path():
-		print(i.card_image)
+		var app_card = preload("res://app_card.tscn").instantiate()
+		app_card.get_node("name").text = i.name
+		app_card.get_node("image").texture = i.card_image
+		
+		$CardsContainer.add_child(app_card)
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

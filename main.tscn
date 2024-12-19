@@ -11,3 +11,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_f5tec")
 steam_registry_path = "HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Valve\\Steam"
+
+[node name="CardsContainer" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+alignment = 1

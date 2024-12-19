@@ -62,8 +62,8 @@ func get_games_path():
 				
 				apps_info.append(steam_app)
 	
-	var get_name = func (app): return app.name
-	apps_info.sort_custom(get_name)
+	#var get_name = func (app): return app.name
+	#apps_info.sort_custom(get_name)
 	
 	return apps_info
 	
