@@ -28,7 +28,8 @@ func parse_single_expression(expr: Array):
 		var key = expr[i].substr(1,len(expr[i])-2)
 		
 		if expr[i+1].begins_with('"'):
-			dict[key] = expr[i+1].substr(1,len(expr[i+1])-2)
+			var value: String = expr[i+1].substr(1,len(expr[i+1])-2)
+			dict[key] = value
 			i+= 2
 		else:
 			if expr[i+1] == "{":
@@ -64,10 +65,32 @@ func get_tokens(expression: String):
 			'"':
 				tokens.append('"')
 				i+=1
+				var keep_loop = true
 				while i < len(expression) and expression[i] != '"' and expression != "\n":
-					tokens[-1] += expression[i]
-					i += 1
-					
+					var char_ = expression[i]
+					if expression[i] == "\\":
+						match expression[i+1]:
+							"\\":
+								char_ = "\\"
+							"n":
+								char_ = "\n"
+							"t":
+								char_ = "\t"
+							"r":
+								char_ = "\r"
+							"b":
+								char_ = "\b"
+							"'":
+								char_ = "'"
+							'"':
+								char_ = '"'
+							"f":
+								char_ = "\f"
+							_:
+								return [ParsingError.UNRECONISED_TOKEN, i, expression[i]]
+						i += 1
+					tokens[-1] += char_
+					i += 1		
 				if expression[i-1] == "\n" or i-1 >= len(expression):
 					return [ParsingError.UNMATCHING_QUOTES, i]
 				tokens[-1] += expression[i]
