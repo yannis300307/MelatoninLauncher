@@ -30,7 +30,10 @@ func get_games_path():
 	
 	var parsed = VdfParser.new().parse_vdf(vdf_data)
 	
-	return parsed
+	for i in parsed["libraryfolders"]:
+		for appid in parsed["libraryfolders"][i]["apps"]:
+			if dir_access.file_exists("appmanifest_" + appid + ".acf"):
+				print("appmanifest_" + appid + ".acf")
 	
 # On Windows, return the Steam installation folder path
 func windows_get_steam_path():
