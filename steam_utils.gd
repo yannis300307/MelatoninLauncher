@@ -30,6 +30,8 @@ func get_games_path():
 	var vdf_data = library_folder_file.get_as_text()
 	library_folder_file.close()
 	
+	var images_dir = DirAccess.open(steam_path.path_join("appcache\\librarycache"))
+	
 	var parsed = VdfParser.new().parse_vdf(vdf_data)
 	
 	for i in parsed["libraryfolders"]:
@@ -49,8 +51,21 @@ func get_games_path():
 				steam_app.name = app_manifest["AppState"]["name"]
 				steam_app.install_path = app_folder_path.path_join("common").path_join(app_manifest["AppState"]["installdir"])
 				steam_app.launcher_path = app_manifest["AppState"]["LauncherPath"]
-				steam_app.card_image = ""
-				print(steam_app.name)
+				
+				if not images_dir.file_exists(appid + "_library_600x900.jpg"):
+					steam_app.card_image = null
+				else:
+					var image = Image.new()
+					image.load(steam_path.path_join("appcache\\librarycache").path_join(appid + "_library_600x900.jpg"))
+					var t = ImageTexture.new()
+					steam_app.card_image = t.create_from_image(image)
+				
+				apps_info.append(steam_app)
+	
+	var get_name = func (app): return app.name
+	apps_info.sort_custom(get_name)
+	
+	return apps_info
 	
 # On Windows, return the Steam installation folder path
 func windows_get_steam_path():
