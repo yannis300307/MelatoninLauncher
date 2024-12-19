@@ -15,6 +15,8 @@ enum SteamPathDetection {
 func get_games_path():
 	var steam_path = await windows_get_steam_path()
 	
+	var apps_info = []
+	
 	var steamapps_path = steam_path.path_join("steamapps")
 		
 	if not DirAccess.dir_exists_absolute(steam_path):
@@ -31,9 +33,24 @@ func get_games_path():
 	var parsed = VdfParser.new().parse_vdf(vdf_data)
 	
 	for i in parsed["libraryfolders"]:
+		var app_folder_path = parsed["libraryfolders"][i]["path"].path_join("steamapps")
+		var library_folder = DirAccess.open(app_folder_path)
+		
+		if library_folder == null:
+			continue
+		
 		for appid in parsed["libraryfolders"][i]["apps"]:
-			if dir_access.file_exists("appmanifest_" + appid + ".acf"):
-				print("appmanifest_" + appid + ".acf")
+			if library_folder.file_exists("appmanifest_" + appid + ".acf"):
+				var app_manifest_file = FileAccess.open(app_folder_path.path_join("appmanifest_" + appid + ".acf"), FileAccess.READ)
+				var app_manifest = VdfParser.new().parse_vdf(app_manifest_file.get_as_text())
+				app_manifest_file.close()
+				
+				var steam_app = SteamApp.new()
+				steam_app.name = app_manifest["AppState"]["name"]
+				steam_app.install_path = app_folder_path.path_join("common").path_join(app_manifest["AppState"]["installdir"])
+				steam_app.launcher_path = app_manifest["AppState"]["LauncherPath"]
+				steam_app.card_image = ""
+				print(steam_app.name)
 	
 # On Windows, return the Steam installation folder path
 func windows_get_steam_path():
