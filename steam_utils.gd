@@ -12,7 +12,7 @@ enum SteamPathDetection {
 	CANT_FIND_GAMES = 3,
 }
 
-func get_games_path():
+func get_games():
 	var steam_path = await windows_get_steam_path()
 	
 	var apps_info = []

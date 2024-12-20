@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://bkjfhtaacsawm"]
+[gd_scene load_steps=3 format=3 uid="uid://bkjfhtaacsawm"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_f5tec"]
+[ext_resource type="Theme" uid="uid://f6003b132kgj" path="res://assets/default_theme.tres" id="1_y5ryv"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -9,12 +10,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_y5ryv")
 script = ExtResource("1_f5tec")
 steam_registry_path = "HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Valve\\Steam"
 
-[node name="CardsContainer" type="HBoxContainer" parent="."]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="CardsContainer" type="FlowContainer" parent="MarginContainer"]
+custom_minimum_size = Vector2(100, 300)
+layout_mode = 2
 alignment = 1

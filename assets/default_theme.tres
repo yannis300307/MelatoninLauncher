@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://f6003b132kgj"]
+
+[ext_resource type="FontFile" uid="uid://byflj2jh3gji" path="res://assets/SourGummy-VariableFont_wdth,wght.ttf" id="1_p0me2"]
+
+[resource]
+default_font = ExtResource("1_p0me2")
+FlowContainer/constants/h_separation = 8
+FlowContainer/constants/v_separation = 8
