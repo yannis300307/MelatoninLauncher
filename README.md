@@ -1,7 +1,5 @@
-# Tauri + Vanilla
+# Melatonin Launcher
 
-This template should help get you started developing with Tauri in vanilla HTML, CSS and Javascript.
+The goal of this program is having a game launcher that can automatically detect games installed on your computer and install patches (such as translations) on it. You should be able to enable or disable patches with only one switch. We are trying to create the most user friendly patch installer possible.
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Learn more about the French translation team : [Team Melatonin](https://team-melatonin.fr/)
