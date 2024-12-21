@@ -26,7 +26,12 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="CardsContainer" type="FlowContainer" parent="MarginContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="CardsContainer" type="FlowContainer" parent="MarginContainer/ScrollContainer"]
 custom_minimum_size = Vector2(100, 300)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 alignment = 1

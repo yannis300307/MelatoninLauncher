@@ -13,7 +13,7 @@ func _ready() -> void:
 		app_card.get_node("name").text = i.name
 		app_card.get_node("image").texture = i.card_image
 		
-		$MarginContainer/CardsContainer.add_child(app_card)
+		$MarginContainer/ScrollContainer/CardsContainer.add_child(app_card)
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
