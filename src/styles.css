@@ -1,0 +1,147 @@
+@font-face {
+  font-family: "Oldenburg";
+  src: url("assets/Oldenburg-Regular.ttf");
+}
+
+:root {
+  --color1: #1B1833;
+  --color2: #441752;
+  --color3: #AB4459;
+  --color4: #F29F58;
+}
+
+body {
+  background-color: var(--color1);
+  color: var(--color4);
+  font-family: "Oldenburg";
+  padding: 10px;
+}
+
+@keyframes spawn-header-bar {
+  0% {
+    transform: translateY(-120px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+#header-bar {
+  background-color: var(--color2);
+  box-shadow: 0px 0px 10px var(--color2);
+  margin-top: 10px;
+  border-radius: 50px;
+  width: 400px;
+  height: 30px;
+  align-content: center;
+  padding: 20px;
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  overflow: hidden;
+  opacity: 0;
+
+  animation: spawn-header-bar 1s ease 0.2s forwards;
+}
+
+#header {
+  width: 100%;
+  display: flex;
+  position: fixed;
+
+  z-index: 100;
+}
+
+#page-title {
+  margin-left: auto;
+  display: flexbox;
+  font-size: 20px;
+}
+
+.header-bar-icons {
+  transition: scale 300ms ease;
+  scale: 1;
+}
+
+.header-bar-icons:hover {
+  scale: 1.1;
+}
+
+.page {
+  margin-top: 110px;
+}
+
+#page-games-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.game-card {
+  border: solid 4px #F29F58;
+  border-radius: 40px;
+  height: 300px;
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: var(--color2);
+  box-shadow: 0px 0px 2px var(--color4);
+  transition: box-shadow 300ms ease;
+  margin-left: 10px;
+  margin-right: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+  scale: 0;
+
+  animation: card-spawn 1s ease forwards;
+  animation-delay: 800ms;
+
+  cursor: pointer;
+}
+
+.game-card:hover {
+  box-shadow: 0px 0px 10px var(--color4);
+}
+
+.card-name {
+  margin: 15px;
+  font-size: 20px;
+  position: absolute;
+  bottom: 0px;
+  background-color: var(--color3);
+  color: white;
+  padding: 15px;
+  border-radius: 30px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0px 0px 3px var(--color4);
+  bottom: -80px;
+
+  transition: bottom 500ms ease;
+}
+
+.game-card:hover .card-name {
+  bottom: 0px;
+}
+
+.game-img {
+  height: inherit;
+  position: absolute;
+}
+
+@keyframes card-spawn {
+  0% {
+    scale: 0;
+  }
+
+  100% {
+    scale: 1;
+  }
+}

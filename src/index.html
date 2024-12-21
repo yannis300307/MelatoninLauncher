@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melatonin Launcher</title>
+  <script type="module" src="/main.js" defer></script>
+</head>
+
+<body>
+  <div id="header">
+    <div id="header-bar">
+      <a class="header-bar-icons">
+        <img src="assets/games.svg" title="Liste des jeux" style="height: 40px;">
+      </a>
+      <a class="header-bar-icons">
+        <img src="assets/settings.svg" title="Modifier les paramètres" style="height: 40px; margin-left: 10px;">
+      </a>
+      <span id="page-title">Melatonin Launcher</span>
+    </div>
+  </div>
+
+  <div id="page-games-list" class="page">
+    <!--Base card-->
+    <a class="game-card" style="display: none;" id="base_card">
+      <img class="game-img" src="assets/game_img.jpg" />
+      <p class="card-name">Name</p>
+    </a>
+  </div>
+</body>
+
+</html>
