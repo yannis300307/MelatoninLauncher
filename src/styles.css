@@ -79,6 +79,7 @@ body {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+  overflow-y: hidden;
 }
 
 .game-card {
@@ -99,15 +100,38 @@ body {
   position: relative;
   margin-bottom: 20px;
   scale: 0;
+}
 
+.game-card-true {
   animation: card-spawn 1s ease forwards;
   animation-delay: 800ms;
 
   cursor: pointer;
 }
 
-.game-card:hover {
+.game-card-true:hover {
   box-shadow: 0px 0px 10px var(--color4);
+}
+
+.game-card-true:hover .card-name {
+  bottom: 0px;
+}
+
+.game-card-fake {
+  animation: card-zoom-transition 1s ease 0s forwards;
+  animation-delay: 0s !important;
+}
+
+@keyframes card-zoom-transition {
+  0% {}
+
+  100%{
+    left: -14px;
+    top: -4px;       /*remove border width and offset*/
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    border-radius: 0px;
+  }
 }
 
 .card-name {
@@ -125,10 +149,6 @@ body {
   bottom: -80px;
 
   transition: bottom 500ms ease;
-}
-
-.game-card:hover .card-name {
-  bottom: 0px;
 }
 
 .game-img {

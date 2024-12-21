@@ -13,18 +13,25 @@ function add_game(name, image) {
   new_card.style = "animation-delay: " + (800 + last_card_id*card_delay) + "ms"
   page_games_list.appendChild(new_card);
 
-  new_card.addEventListener("click", ()=> select_game(new_card));
+  new_card.addEventListener('click', () => {
+    var new_card_duplicated = new_card.cloneNode(true);
+    var br= new_card.getBoundingClientRect();
+    new_card_duplicated.id=new_card.id+"_duplicated";
+    new_card_duplicated.classList = "game-card game-card-fake";
+    new_card_duplicated.style.position= 'fixed';
+    new_card_duplicated.style.left= (br.left-10)+'px';
+    new_card_duplicated.style.top = br.top +'px';
+    new_card_duplicated.style.scale = 1;
 
+    setTimeout(() => {
+      page_games_list.style.height = 0;
+      
+    }, 1000) // hide all sprites
+
+    page_games_list.appendChild(new_card_duplicated);
+  });
 
   last_card_id++;
-}
-
-function select_game(card) {
-  const x_offset = card.getBoundingClientRect().x - document.body.getBoundingClientRect().x;
-
-  console.log(x_offset)
-
-  card.style = "position: absolute; transform: translate(" + x_offset + "px, 0px); scale: 1.5;";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
