@@ -14,21 +14,21 @@ function add_game(name, image) {
   page_games_list.appendChild(new_card);
 
   new_card.addEventListener('click', () => {
-    var new_card_duplicated = new_card.cloneNode(true);
+    var base_card_fake = document.getElementById("base_card_fake").cloneNode(true);
     var br= new_card.getBoundingClientRect();
-    new_card_duplicated.id=new_card.id+"_duplicated";
-    new_card_duplicated.classList = "game-card game-card-fake";
-    new_card_duplicated.style.position= 'fixed';
-    new_card_duplicated.style.left= (br.left-10)+'px';
-    new_card_duplicated.style.top = br.top +'px';
-    new_card_duplicated.style.scale = 1;
+    base_card_fake.style.display = "flex";
+    base_card_fake.classList = "game-card game-card-fake";
+    base_card_fake.style.position= 'fixed';
+    base_card_fake.style.left= (br.left-10)+'px';
+    base_card_fake.style.top = br.top +'px';
+    base_card_fake.style.scale = 1;
 
     setTimeout(() => {
       page_games_list.style.height = 0;
       
     }, 1000) // hide all sprites
 
-    page_games_list.appendChild(new_card_duplicated);
+    page_games_list.appendChild(base_card_fake);
   });
 
   last_card_id++;

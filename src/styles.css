@@ -91,7 +91,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  background-color: var(--color2);
+  background-color: var(--color1);
   box-shadow: 0px 0px 2px var(--color4);
   transition: box-shadow 300ms ease;
   margin-left: 10px;
@@ -122,6 +122,10 @@ body {
   animation-delay: 0s !important;
 }
 
+.game-card-fake .game-img{
+  animation: card-image-to-header 1s ease 0s forwards;
+}
+
 @keyframes card-zoom-transition {
   0% {}
 
@@ -132,6 +136,21 @@ body {
     height: calc(100% + 4px);
     border-radius: 0px;
   }
+}
+
+@keyframes card-image-to-header {
+  0% {
+  }
+  100%{
+    max-width: 100%;
+    max-height: 200%;
+  }
+}
+
+.game-card-fake {
+  animation: card-zoom-transition 1s ease 0s forwards;
+  animation-delay: 0s !important;
+  align-content: flex-start;
 }
 
 .card-name {
@@ -152,8 +171,13 @@ body {
 }
 
 .game-img {
-  height: inherit;
+  width: 200%;
+  height: auto;
+  max-width: 200%;
+  max-height: 100%; /*transition from width 100% to height 100%*/
   position: absolute;
+  object-fit: contain;
+
 }
 
 @keyframes card-spawn {
