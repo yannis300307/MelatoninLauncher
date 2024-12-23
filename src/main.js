@@ -14,7 +14,7 @@ function add_game(name, image) {
   page_games_list.appendChild(new_card);
 
   new_card.addEventListener('click', () => {
-    var base_card_fake = document.getElementById("base_card_fake").cloneNode(true);
+    var base_card_fake = document.getElementById("base_card_fake");
     var br= new_card.getBoundingClientRect();
     base_card_fake.style.display = "flex";
     base_card_fake.classList = "game-card game-card-fake";
@@ -25,10 +25,10 @@ function add_game(name, image) {
 
     setTimeout(() => {
       page_games_list.style.height = 0;
-      
+      base_card_fake.style.overflowY = "scroll";
     }, 1000) // hide all sprites
 
-    page_games_list.appendChild(base_card_fake);
+    //page_games_list.appendChild(base_card_fake);
   });
 
   last_card_id++;
