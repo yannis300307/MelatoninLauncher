@@ -34,6 +34,18 @@ function add_game(name, image) {
   last_card_id++;
 }
 
+function dispawn_game_page() {
+  let cards = document.getElementsByClassName("game-card");
+
+  for (let i = 0; i < cards.length; i++) {
+    cards[i].classList = "game-card game-card-dispawned";
+  }
+
+  document.getElementById("add-game-button").style.animation = "dispawn-add-game-button 1s ease 0.2s forwards";
+
+  setTimeout(() => {page_games_list.style.display = "none";}, 1000);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   add_game("Hello Charlotte", "assets/game_img.jpg");
   add_game("Hello Charlotte", "assets/game_img.jpg");
@@ -52,4 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
   add_game("Hello Charlotte", "assets/game_img.jpg");
   add_game("Hello Charlotte", "assets/game_img.jpg");
   add_game("Hello Charlotte", "assets/game_img.jpg");
+
+  document.getElementById("add-game-button").addEventListener("click", dispawn_game_page);
 });
