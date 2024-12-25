@@ -1,3 +1,12 @@
+// When using the Tauri API npm package:
+//import { invoke } from '@tauri-apps/api/tauri'
+// When using the Tauri global script (if not using the npm package)
+// Be sure to set `build.withGlobalTauri` in `tauri.conf.json` to true
+//const invoke = window.__TAURI__.invoke
+
+// Invoke the command
+//invoke('my_custom_command')
+
 var last_card_id = 0;
 const card_delay = 150; // Milliseconds
 
@@ -46,6 +55,10 @@ function dispawn_game_page() {
   setTimeout(() => {page_games_list.style.display = "none";}, 1000);
 }
 
+function steam_scan_clicked() {
+  document.getElementById("steam-scan-button").classList = "button steam-scan-button-loading";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   add_game("Hello Charlotte", "assets/game_img.jpg");
   add_game("Hello Charlotte", "assets/game_img.jpg");
@@ -66,4 +79,5 @@ document.addEventListener("DOMContentLoaded", () => {
   add_game("Hello Charlotte", "assets/game_img.jpg");
 
   document.getElementById("add-game-button").addEventListener("click", dispawn_game_page);
+  document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
 });
