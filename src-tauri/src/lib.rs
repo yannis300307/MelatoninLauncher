@@ -16,18 +16,37 @@ fn get_steam_installed_apps() -> Vec<String> {
     let library_folder_content = fs::read_to_string(Path::new(&steam_path).join("steamapps").join("libraryfolders.vdf"))
         .expect("Can't access library folder file.");
 
-    let library_folder_parsed = vdf_parser::parse_vdf_text(&library_folder_content).expect("Error handling library folder VDF file");
+    let library_folder_parsed = vdf_parser::parse_vdf_text(&library_folder_content).expect("Error handling library folder VDF file.");
     
-    match library_folder_parsed.value {
-        vdf_parser::VdfValue::Block(block) => {
-            todo!("Iterate libraries")
-        }
-        vdf_parser::VdfValue::String(_) => {todo!("Handle error")}
-    }
-
     let mut games: Vec<String> = Vec::new();
 
-    games.push("Hello".to_string());
+    match library_folder_parsed.value {
+        vdf_parser::VdfValue::Block(library_folder_block) => {
+            for library in library_folder_block.values() {
+                match &library.value {
+                    vdf_parser::VdfValue::Block(library_block) => {
+                        match library_block.get("apps") {
+                            Some(app) => {
+                                match &app.value {
+                                    vdf_parser::VdfValue::Block(game_id) => {
+                                        for game in game_id.keys() {
+                                            games.push(game.to_string());
+                                        }
+                                    }
+
+                                    vdf_parser::VdfValue::String(_) => {panic!("Library VDF file is invalid.");}
+                                }
+                                
+                            },
+                            None => panic!("Library VDF file is invalid.")
+                        }
+                    }
+                    vdf_parser::VdfValue::String(_) => {panic!("Library VDF file is invalid.");}
+                }
+            }
+        }
+        vdf_parser::VdfValue::String(_) => {panic!("Library VDF file is invalid.");}
+    }
 
     games
 }
