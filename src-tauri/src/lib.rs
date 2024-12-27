@@ -2,12 +2,12 @@ use std;
 use std::env;
 use std::fs;
 use std::path::Path;
-use winreg::enums::*;
-use winreg::RegKey;
+
+#[cfg(target_os = "windows")]
+use {winreg::enums::*, winreg::RegKey};
 
 fn get_steam_path() -> String {
-    let steam_path = match env::consts::OS {
-        "windows" => {
+    if cfg!(target_os = "windows") {
             let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
             let steam_registry_info = hklm
                 .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
@@ -17,20 +17,16 @@ fn get_steam_path() -> String {
                 .expect("InstallPath is not readable.");
             steam_path
         }
-        "linux" => {
+        else if cfg!(target_os = "linux") {
             if Path::exists(Path::new("~/.local/share/Steam")) {
                 let steam_path = "~/.local/share/Steam".to_string();
                 steam_path
             } else {
                 todo!("Mettre une erreur");
             }
+        } else {
+            panic!("Os non supporté.")
         }
-        _ => {
-            panic!("Ce systeme d'exploitation n'est pas supporté.");
-        }
-    };
-
-    steam_path
 }
 
 #[tauri::command]
