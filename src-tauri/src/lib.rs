@@ -7,26 +7,27 @@ use std::path::Path;
 use {winreg::enums::*, winreg::RegKey};
 
 fn get_steam_path() -> String {
-    if cfg!(target_os = "windows") {
-            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-            let steam_registry_info = hklm
-                .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
-                .expect("Can't find Steam in registry.");
-            let steam_path: String = steam_registry_info
-                .get_value("InstallPath")
-                .expect("InstallPath is not readable.");
+    #[cfg(target_os = "windows")]
+    return {
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let steam_registry_info = hklm
+            .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
+            .expect("Can't find Steam in registry.");
+        let steam_path: String = steam_registry_info
+            .get_value("InstallPath")
+            .expect("InstallPath is not readable.");
+        steam_path
+    };
+    #[cfg(target_os = "linux")]
+    return {
+        if Path::exists(Path::new("~/.local/share/Steam")) {
+            let steam_path = "~/.local/share/Steam".to_string();
             steam_path
-        }
-        else if cfg!(target_os = "linux") {
-            if Path::exists(Path::new("~/.local/share/Steam")) {
-                let steam_path = "~/.local/share/Steam".to_string();
-                steam_path
-            } else {
-                todo!("Mettre une erreur");
-            }
         } else {
-            panic!("Os non supporté.")
+            todo!("Mettre une erreur");
         }
+    };
+    panic!("OS not supported");
 }
 
 #[tauri::command]
