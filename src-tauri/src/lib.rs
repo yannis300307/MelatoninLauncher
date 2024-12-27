@@ -20,7 +20,7 @@ fn get_steam_path() -> String {
     };
     #[cfg(target_os = "linux")]
     return {
-        let steam_path = std::env::var("HOME").expect("Impossible de trouver le dossier home.");
+        let mut steam_path = std::env::var("HOME").expect("Impossible de trouver le dossier home.");
         steam_path.push_str("/.local/share/Steam");
         if Path::exists(Path::new(&steam_path)) {
             steam_path
