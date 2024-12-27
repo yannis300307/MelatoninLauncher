@@ -21,14 +21,13 @@ fn get_steam_path() -> String {
     #[cfg(target_os = "linux")]
     return {
         let home_dir = std::env::var("HOME").expect("Impossible de trouver le dossier home.").as_str();
-        if Path::exists(Path::new(home_dir + "/.local/share/Steam")) {
+        if Path::exists(Path::new(home_dir.to_owned() + "/.local/share/Steam")) {
             let steam_path = "~/.local/share/Steam".to_string();
             steam_path
         } else {
             todo!("Mettre une erreur");
         }
     };
-    panic!("OS not supported");
 }
 
 #[tauri::command]
