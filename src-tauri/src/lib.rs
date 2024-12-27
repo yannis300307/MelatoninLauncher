@@ -6,28 +6,28 @@ use std::path::Path;
 #[cfg(target_os = "windows")]
 use {winreg::enums::*, winreg::RegKey};
 
+#[cfg(target_os = "linux")]
 fn get_steam_path() -> String {
-    #[cfg(target_os = "windows")]
-    return {
-        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-        let steam_registry_info = hklm
-            .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
-            .expect("Can't find Steam in registry.");
-        let steam_path: String = steam_registry_info
-            .get_value("InstallPath")
-            .expect("InstallPath is not readable.");
+    let mut steam_path = std::env::var("HOME").expect("Impossible de trouver le dossier home.");
+    steam_path.push_str("/.local/share/Steam");
+    if Path::exists(Path::new(&steam_path)) {
         steam_path
-    };
-    #[cfg(target_os = "linux")]
-    return {
-        let mut steam_path = std::env::var("HOME").expect("Impossible de trouver le dossier home.");
-        steam_path.push_str("/.local/share/Steam");
-        if Path::exists(Path::new(&steam_path)) {
-            steam_path
-        } else {
-            todo!("Mettre une erreur");
-        }
-    };
+    } else {
+        todo!("Mettre une erreur");
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_steam_path() -> String {
+    use {winreg::enums::*, winreg::RegKey};
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let steam_registry_info = hklm
+        .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
+        .expect("Can't find Steam in registry.");
+    let steam_path: String = steam_registry_info
+        .get_value("InstallPath")
+        .expect("InstallPath is not readable.");
+    steam_path
 }
 
 #[tauri::command]
