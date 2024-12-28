@@ -31,9 +31,9 @@ fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     };
     steam_path.push_str("/.local/share/Steam");
     if Path::exists(Path::new(&steam_path)) {
-        steam_path
+        Ok(steam_path)
     } else {
-        return Err(SteamPathDetectionError(
+        return Err(SteamPathDetectionError::CantFindSteamDirectory(
             "Impssible de détecter Steam.".to_string(),
         ));
     }
