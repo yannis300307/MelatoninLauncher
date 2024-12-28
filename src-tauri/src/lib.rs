@@ -6,7 +6,9 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+use std::fs::File;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 const TM_DOMAINE: &str = "https://team-melatonin.fr/";
@@ -60,7 +62,7 @@ struct ContactSocial {
 struct Patch {
     name: String,
     patch_version: String,
-    steamid: String,
+    steam_id: String,
     download_link: String,
     card_image: String,
     traductors: Vec<String>,
@@ -69,8 +71,20 @@ struct Patch {
 }
 
 enum GetPatchesInfoError {
-    cantReadFile,
-    networkError,
+    CantReadFile(String),
+    NetworkError(String),
+}
+
+#[derive(Deserialize, Debug)]
+struct LibraryFolders {
+    #[serde(flatten)]
+    folders: HashMap<String, Library>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Library {
+    path: PathBuf,
+    apps: HashMap<String, String>,
 }
 
 impl MelatoninInfo {
@@ -81,19 +95,21 @@ impl MelatoninInfo {
             Ok(data) => {
                 let infos: MelatoninInfo = match data.json() {
                     Ok(data) => data,
-                    Err(_error) => return Err(GetPatchesInfoError::cantReadFile),
+                    Err(error) => {
+                        return Err(GetPatchesInfoError::CantReadFile(format!("{}", error)))
+                    }
                 };
 
                 Ok(infos)
             }
-            Err(_error) => Err(GetPatchesInfoError::networkError),
+            Err(error) => Err(GetPatchesInfoError::NetworkError(format!("{}", error))),
         }
     }
 
     fn get_available_patches(&self) -> Vec<String> {
         let mut patches_id: Vec<String> = Vec::new();
         for patch in self.patches.values() {
-            patches_id.push(patch.steamid.to_owned());
+            patches_id.push(patch.steam_id.to_owned());
         }
 
         patches_id
@@ -102,48 +118,36 @@ impl MelatoninInfo {
 
 #[tauri::command]
 fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Vec<String> {
-    state.0.lock().unwrap().update_melatonin_info();
+    let mut core = state.0.lock().unwrap();
+
+    if core.melatonin_info.is_none() {
+        core.update_melatonin_info();
+    }
+
+    if let Some(melatonin_info) = &core.melatonin_info {
+        for patch in melatonin_info.get_available_patches() {
+            println!("{}", patch)
+        }
+    } else {
+        println!("Can't read patches");
+    }
 
     // Get the Steam path from the registry
     let steam_path = get_steam_path();
 
-    let library_folder_content = fs::read_to_string(
+    let file = File::open(
         Path::new(&steam_path)
             .join("steamapps")
             .join("libraryfolders.vdf"),
     )
     .expect("Can't access library folder file.");
-
-    let library_folder_parsed = vdf_parser::parse_vdf_text(&library_folder_content)
-        .expect("Error handling library folder VDF file.");
+    let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
 
     let mut games: Vec<String> = Vec::new();
 
-    match library_folder_parsed.value {
-        vdf_parser::VdfValue::Block(library_folder_block) => {
-            for library in library_folder_block.values() {
-                match &library.value {
-                    vdf_parser::VdfValue::Block(library_block) => match library_block.get("apps") {
-                        Some(app) => match &app.value {
-                            vdf_parser::VdfValue::Block(game_id) => {
-                                for game in game_id.keys() {
-                                    games.push(game.to_string());
-                                }
-                            }
-                            vdf_parser::VdfValue::String(_) => {
-                                panic!("Library VDF file is invalid.");
-                            }
-                        },
-                        None => panic!("Library VDF file is invalid."),
-                    },
-                    vdf_parser::VdfValue::String(_) => {
-                        panic!("Library VDF file is invalid.");
-                    }
-                }
-            }
-        }
-        vdf_parser::VdfValue::String(_) => {
-            panic!("Library VDF file is invalid.");
+    for folder in folders.folders.values() {
+        for app in folder.apps.values() {
+            games.push(app.to_owned());
         }
     }
 
@@ -166,6 +170,7 @@ impl MelatoninLauncher {
         match updated {
             Ok(info) => {
                 self.melatonin_info = Some(info);
+
                 Ok(())
             }
             Err(error) => Err(error),
