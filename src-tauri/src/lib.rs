@@ -16,35 +16,52 @@ const TM_DOMAINE: &str = "https://team-melatonin.fr/";
 #[derive(Debug)]
 enum SteamPathDetectionError {
     CantReadInRegistry(String),
-    CantFindSteamDirectory(String)
+    CantFindSteamDirectory(String),
 }
 
 #[cfg(target_os = "linux")]
 fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     let mut steam_path = match std::env::var("HOME") {
         Ok(data) => data,
-        Err(error) => return Err(SteamPathDetectionError::CantFindSteamDirectory("Impossible de trouver le dossier home.".to_string()))
+        Err(error) => {
+            return Err(SteamPathDetectionError::CantFindSteamDirectory(
+                "Impossible de trouver le dossier home.".to_string(),
+            ))
+        }
     };
     steam_path.push_str("/.local/share/Steam");
     if Path::exists(Path::new(&steam_path)) {
         steam_path
     } else {
-        return Err(SteamPathDetectionError("Impssible de détecter Steam.".to_string()))
+        return Err(SteamPathDetectionError(
+            "Impssible de détecter Steam.".to_string(),
+        ));
     }
 }
 
-
 #[cfg(target_os = "windows")]
 fn get_steam_path() -> Result<String, SteamPathDetectionError> {
-    use {std::f64::consts::E, winreg::{enums::*, RegKey}};
+    use {
+        std::f64::consts::E,
+        winreg::{enums::*, RegKey},
+    };
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let steam_registry_info = match hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
         Ok(data) => data,
-        Err(_error) => return Err(SteamPathDetectionError::CantReadInRegistry("Impossible de trouver Steam dans le registre.".to_string()))
+        Err(_error) => {
+            return Err(SteamPathDetectionError::CantReadInRegistry(
+                "Impossible de trouver Steam dans le registre.".to_string(),
+            ))
+        }
     };
     let steam_path: String = match steam_registry_info.get_value("InstallPath") {
         Ok(data) => data,
-        Err(_error) => return Err(SteamPathDetectionError::CantReadInRegistry("La section du registre de Steam n'indique pas le dossier d'installation.".to_string()))
+        Err(_error) => {
+            return Err(SteamPathDetectionError::CantReadInRegistry(
+                "La section du registre de Steam n'indique pas le dossier d'installation."
+                    .to_string(),
+            ))
+        }
     };
 
     Ok(steam_path)
@@ -148,24 +165,37 @@ fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Ve
         // Get the Steam path from the registry
         let steam_path = match get_steam_path() {
             Ok(data) => data,
-            Err(error) => return Err(format!("Erreur de récupération du dossier de Steam: {:?}", error))
+            Err(error) => {
+                return Err(format!(
+                    "Erreur de récupération du dossier de Steam: {:?}",
+                    error
+                ))
+            }
         };
 
         let file: File = match File::open(
             Path::new(&steam_path)
                 .join("steamapps")
-                .join("libraryfolders.vdf")) {
+                .join("libraryfolders.vdf"),
+        ) {
             Ok(data) => data,
-            Err(error) => return Err(format!("Erreur de lecture du fichier LibraryFolder: {}", error))
+            Err(error) => {
+                return Err(format!(
+                    "Erreur de lecture du fichier LibraryFolder: {}",
+                    error
+                ))
+            }
         };
-        
+
         let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
 
         let mut games: Vec<String> = Vec::new();
 
         for folder in folders.folders.values() {
-            for app in folder.apps.values() {
-                games.push(app.to_owned());
+            for app in folder.apps.keys() {
+                if available_patches.contains(app) {
+                    games.push(app.to_owned());
+                }
             }
         }
 
