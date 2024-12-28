@@ -49,7 +49,7 @@ function dispawn_game_page() {
 
 function steam_scan_clicked() {
   document.getElementById("steam-scan-button").classList = "button steam-scan-button-loading";
-  invoke('get_steam_installed_apps').then((message) => console.log(message));
+  invoke('get_steam_installed_apps').then((message) => console.log(message)).catch((error) => console.error(error));
 }
 
 document.addEventListener("DOMContentLoaded", () => {

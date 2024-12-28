@@ -13,28 +13,41 @@ use std::sync::Mutex;
 
 const TM_DOMAINE: &str = "https://team-melatonin.fr/";
 
+#[derive(Debug)]
+enum SteamPathDetectionError {
+    CantReadInRegistry(String),
+    CantFindSteamDirectory(String)
+}
+
 #[cfg(target_os = "linux")]
-fn get_steam_path() -> String {
-    let mut steam_path = std::env::var("HOME").expect("Impossible de trouver le dossier home.");
+fn get_steam_path() -> Result<String, SteamPathDetectionError> {
+    let mut steam_path = match std::env::var("HOME") {
+        Ok(data) => data,
+        Err(error) => return Err(SteamPathDetectionError::CantFindSteamDirectory("Impossible de trouver le dossier home.".to_string()))
+    };
     steam_path.push_str("/.local/share/Steam");
     if Path::exists(Path::new(&steam_path)) {
         steam_path
     } else {
-        todo!("Mettre une erreur");
+        return Err(SteamPathDetectionError("Impssible de détecter Steam.".to_string()))
     }
 }
 
+
 #[cfg(target_os = "windows")]
-fn get_steam_path() -> String {
-    use {winreg::enums::*, winreg::RegKey};
+fn get_steam_path() -> Result<String, SteamPathDetectionError> {
+    use {std::f64::consts::E, winreg::{enums::*, RegKey}};
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let steam_registry_info = hklm
-        .open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")
-        .expect("Can't find Steam in registry.");
-    let steam_path: String = steam_registry_info
-        .get_value("InstallPath")
-        .expect("InstallPath is not readable.");
-    steam_path
+    let steam_registry_info = match hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
+        Ok(data) => data,
+        Err(_error) => return Err(SteamPathDetectionError::CantReadInRegistry("Impossible de trouver Steam dans le registre.".to_string()))
+    };
+    let steam_path: String = match steam_registry_info.get_value("InstallPath") {
+        Ok(data) => data,
+        Err(_error) => return Err(SteamPathDetectionError::CantReadInRegistry("La section du registre de Steam n'indique pas le dossier d'installation.".to_string()))
+    };
+
+    Ok(steam_path)
 }
 
 #[derive(Deserialize, Debug)]
@@ -70,6 +83,7 @@ struct Patch {
     testers: Vec<String>,
 }
 
+#[derive(Debug)]
 enum GetPatchesInfoError {
     CantReadFile(String),
     NetworkError(String),
@@ -117,41 +131,48 @@ impl MelatoninInfo {
 }
 
 #[tauri::command]
-fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Vec<String> {
+fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Vec<String>, String> {
     let mut core = state.0.lock().unwrap();
 
     if core.melatonin_info.is_none() {
-        core.update_melatonin_info();
+        match core.update_melatonin_info() {
+            Ok(_) => (),
+            Err(error) => {
+                return Err(format!("{:?}", error));
+            }
+        }
     }
 
     if let Some(melatonin_info) = &core.melatonin_info {
-        for patch in melatonin_info.get_available_patches() {
-            println!("{}", patch)
+        let available_patches = melatonin_info.get_available_patches();
+        // Get the Steam path from the registry
+        let steam_path = match get_steam_path() {
+            Ok(data) => data,
+            Err(error) => return Err(format!("Erreur de récupération du dossier de Steam: {:?}", error))
+        };
+
+        let file: File = match File::open(
+            Path::new(&steam_path)
+                .join("steamapps")
+                .join("libraryfolders.vdf")) {
+            Ok(data) => data,
+            Err(error) => return Err(format!("Erreur de lecture du fichier LibraryFolder: {}", error))
+        };
+        
+        let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
+
+        let mut games: Vec<String> = Vec::new();
+
+        for folder in folders.folders.values() {
+            for app in folder.apps.values() {
+                games.push(app.to_owned());
+            }
         }
+
+        Ok(games)
     } else {
-        println!("Can't read patches");
+        Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
     }
-
-    // Get the Steam path from the registry
-    let steam_path = get_steam_path();
-
-    let file = File::open(
-        Path::new(&steam_path)
-            .join("steamapps")
-            .join("libraryfolders.vdf"),
-    )
-    .expect("Can't access library folder file.");
-    let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
-
-    let mut games: Vec<String> = Vec::new();
-
-    for folder in folders.folders.values() {
-        for app in folder.apps.values() {
-            games.push(app.to_owned());
-        }
-    }
-
-    games
 }
 
 struct MelatoninLauncher {
