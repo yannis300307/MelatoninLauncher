@@ -1,6 +1,5 @@
 const { invoke } = window.__TAURI__.core;
 
-invoke('get_steam_installed_apps').then((message) => console.log(message));
 
 var last_card_id = 0;
 const card_delay = 150; // Milliseconds
@@ -30,9 +29,7 @@ function add_game(name, image) {
     setTimeout(() => {
       page_games_list.style.height = 0;
       base_card_fake.style.overflowY = "scroll";
-    }, 1000) // hide all sprites
-
-    //page_games_list.appendChild(base_card_fake);
+    }, 1000) // hide all cards
   });
 
   last_card_id++;
@@ -52,6 +49,7 @@ function dispawn_game_page() {
 
 function steam_scan_clicked() {
   document.getElementById("steam-scan-button").classList = "button steam-scan-button-loading";
+  invoke('get_steam_installed_apps').then((message) => console.log(message));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
