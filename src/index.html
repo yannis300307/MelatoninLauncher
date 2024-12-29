@@ -42,7 +42,19 @@
   <div id="page-add-game" class="page" style="">
     <div id="page-add-game-sub">
       <p style="font-size: 25px; font-weight: bold;">Ajouter un jeu</p>
-      <a class="button" id="steam-scan-button">Detecter dans Steam</a>
+      <a class="button add-game-buttons" id="steam-scan-button">Detecter dans Steam</a>
+      <a class="button add-game-buttons" id="select-game-button" style="margin-top: 10px;">Ajouter manuelement</a>
+      <div id="steam-scan-result-list">
+        <div class="add-game-found-list-element" id="base-game-found-list-element">
+          <label class="checkbox">
+            <input type="checkbox" name="select-game" checked="checked">
+            <span class="checkbox-custom">✔</span>
+          </label>
+          <span class="add-game-found-list-element-name">Name</span>
+          <img src="https://team-melatonin.fr/assets/gh_icon.png" alt="game-icon">
+        </div>
+      </div>
+      <p id="add-game-info">Scan Info</p>
     </div>
   </div>
 </body>

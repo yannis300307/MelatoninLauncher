@@ -314,18 +314,18 @@ body {
   margin-left: auto;
 }
 
-#steam-scan-button {
+.add-game-buttons {
   display: flex;
-  width: 180px;
+  width: 250px;
   height: 20px;
   text-justify: center;
+  flex-direction: column;
   text-align: center;
   margin-left: auto;
   margin-right: auto;
 }
 
-.steam-scan-button-loading {
-  animation: button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear;
+.button-loading {
   cursor: default;
   box-shadow: 0px 0px 10px var(--color4) !important;
 }
@@ -334,7 +334,7 @@ body {
   0% {}
   20% {
     color: transparent;
-    width: 180px;
+    width: 250px;
     height: 20px;
     border-radius: 5px;
   }
@@ -358,6 +358,25 @@ body {
   }
 }
 
+@keyframes button-to-loading-reversed {
+  100% {}
+  80% {
+    color: transparent;
+    width: 250px;
+    height: 20px;
+    border-radius: 5px;
+  }
+
+  0% {
+    height: 20px;
+    width: 20px;
+    border-radius: 50px;
+    background-color: transparent;
+    border: dashed var(--color4);
+    color: transparent;
+  }
+}
+
 @keyframes rotate {
   0% {
     transform: rotate(0deg);
@@ -366,4 +385,84 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+#steam-scan-result-list {
+  height: 200px;
+  width: auto;
+  border-radius: 8px;
+  border: solid 3px var(--color3);
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+#add-game-info {
+  margin: 5px;
+  max-height: 0px;
+
+  transition: max-height 500ms ease;
+  overflow-y: hidden;
+}
+
+.add-game-found-list-element {
+  background-color: var(--color2);
+  margin: 4px;
+  border: solid 2px ;
+  border-radius: 4px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.add-game-found-list-element img {
+  height: inherit;
+  margin-left: auto;
+}
+
+.add-game-found-list-element input {
+  background-color: var(--color1);
+}
+
+.checkbox input { /*Hide default*/
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox {
+  display: block;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.checkbox-custom {
+  height: 20px;
+  width: 20px;
+  background-color: var(--color2);
+  display: block;
+  border: solid 2px var(--color4);
+  border-radius: 3px;
+  transition: background-color 150ms ease, box-shadow 500ms ease;
+  box-shadow: 0px 0px 0px var(--color4);
+  color: transparent;
+  user-select: none;
+  text-align: center;
+  text-justify: center;
+  line-height: 20px;
+}
+
+.checkbox input:checked ~ .checkbox-custom {
+  background-color: var(--color3);
+  color: #F29F58;
+}
+
+
+.checkbox:hover input ~ .checkbox-custom {
+  box-shadow: 0px 0px 4px var(--color4);
+}
+
+#base-game-found-list-element {
+  display: none;
 }
