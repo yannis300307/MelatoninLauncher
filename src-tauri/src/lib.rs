@@ -3,6 +3,7 @@
 use directories::ProjectDirs;
 use reqwest::blocking;
 use serde::Deserialize;
+use serde_json::json;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -98,6 +99,7 @@ struct Patch {
     traductors: Vec<String>,
     artits: Vec<String>,
     testers: Vec<String>,
+    icon: String,
 }
 
 #[derive(Debug)]
@@ -145,10 +147,18 @@ impl MelatoninInfo {
 
         patches_id
     }
+
+    fn link_steam_id_to_global(&self) -> HashMap<String, String> {
+        let mut patches_link: HashMap<String, String> = HashMap::new();
+        for (global_id, patch) in &self.patches {
+            patches_link.insert(patch.steam_id.to_owned(), global_id.to_owned());
+        }
+        patches_link
+    }
 }
 
 #[tauri::command]
-fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Vec<String>, String> {
+fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Vec<serde_json::Value>, String> {
     let mut core = state.0.lock().unwrap();
 
     if core.melatonin_info.is_none() {
@@ -189,12 +199,25 @@ fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Ve
 
         let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
 
-        let mut games: Vec<String> = Vec::new();
+        let linked_steam_id = melatonin_info.link_steam_id_to_global();
+
+        let mut games: Vec<serde_json::Value> = Vec::new();
 
         for folder in folders.folders.values() {
             for app in folder.apps.keys() {
                 if available_patches.contains(app) {
-                    games.push(app.to_owned());
+                    let app_info = melatonin_info.patches.get(linked_steam_id.get(app).unwrap()).unwrap();
+                    games.push(json!({
+                        "steam_id": app_info.steam_id,
+                        "icon": app_info.icon,
+                        "name": app_info.name,
+                        "patch_version": app_info.patch_version,
+                        "download_link": app_info.download_link,
+                        "card_image": app_info.card_image,
+                        "traductors": app_info.traductors,
+                        "artits": app_info.artits,
+                        "testers": app_info.testers,
+                    }));
                 }
             }
         }
