@@ -389,7 +389,7 @@ body {
 }
 
 #steam-scan-result-list {
-  height: 200px;
+  height: 195px;
   width: auto;
   border-radius: 8px;
   border: solid 3px var(--color3);
