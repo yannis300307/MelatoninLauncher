@@ -2,7 +2,7 @@
 
 use directories::ProjectDirs;
 use reqwest::blocking;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::env;
@@ -89,7 +89,7 @@ struct ContactSocial {
     url: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 struct Patch {
     name: String,
     patch_version: String,
@@ -118,6 +118,13 @@ struct LibraryFolders {
 struct Library {
     path: PathBuf,
     apps: HashMap<String, String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct RegisteredApp {
+    name: String,
+    installation_path: String,
+    availbale_patch: Patch,
 }
 
 impl MelatoninInfo {
@@ -206,8 +213,10 @@ fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Ve
         for folder in folders.folders.values() {
             for app in folder.apps.keys() {
                 if available_patches.contains(app) {
-                    let app_info = melatonin_info.patches.get(linked_steam_id.get(app).unwrap()).unwrap();
+                    let global_id = linked_steam_id.get(app).unwrap();
+                    let app_info = melatonin_info.patches.get(global_id).unwrap();
                     games.push(json!({
+                        "global_id": global_id,
                         "steam_id": app_info.steam_id,
                         "icon": app_info.icon,
                         "name": app_info.name,
@@ -230,12 +239,14 @@ fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Ve
 
 struct MelatoninLauncher {
     melatonin_info: Option<MelatoninInfo>,
+    registered_apps: Vec<RegisteredApp>
 }
 
 impl MelatoninLauncher {
     fn new() -> MelatoninLauncher {
         MelatoninLauncher {
             melatonin_info: None,
+            registered_apps: Vec::new()
         }
     }
 
@@ -257,9 +268,7 @@ struct LauncherState(pub Mutex<MelatoninLauncher>);
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(LauncherState(Mutex::new(MelatoninLauncher {
-            melatonin_info: None,
-        })))
+        .manage(LauncherState(Mutex::new(MelatoninLauncher::new())))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![get_steam_installed_apps])
         .run(tauri::generate_context!())
