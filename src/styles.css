@@ -52,6 +52,7 @@ body {
   width: 100%;
   display: flex;
   position: fixed;
+  left: 0px;
 
   z-index: 100;
 }
