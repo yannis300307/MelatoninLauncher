@@ -395,6 +395,7 @@ body {
   border: solid 3px var(--color3);
   overflow-y: auto;
   margin-top: 10px;
+  overflow-x: hidden;
 }
 
 #add-game-info {
@@ -413,6 +414,21 @@ body {
   height: 40px;
   display: flex;
   align-items: center;
+  opacity: 0;
+
+  animation: list-game-spawn 1s ease forwards;
+}
+
+@keyframes list-game-spawn {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0px);
+    opacity: 1;
+  }
 }
 
 .add-game-found-list-element img {
@@ -452,6 +468,7 @@ body {
   text-align: center;
   text-justify: center;
   line-height: 20px;
+  cursor: pointer;
 }
 
 .checkbox input:checked ~ .checkbox-custom {

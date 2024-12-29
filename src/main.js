@@ -12,6 +12,9 @@ const steam_scan_result_list = document.getElementById("steam-scan-result-list")
 
 const TM_BASE_URL = "https://team-melatonin.fr/";
 
+var found_apps = [];
+var steam_scan_loading = false;
+
 function add_game(name, image) {
   const new_card = base_card.cloneNode(true);
   new_card.id = "card_" + last_card_id;
@@ -53,22 +56,33 @@ function dispawn_game_page() {
 }
 
 function steam_scan_clicked() {
+  if (steam_scan_loading) return;
+
+  steam_scan_loading = true;
+  
   steam_scan_button.classList = "button button-loading add-game-buttons";
   steam_scan_button.style.animation = "button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear";
+
   setTimeout(() => {
     invoke('get_steam_installed_apps').then((message) => {
       console.log(message);
       for (let i = 0; i < message.length; i++) {
         let current_app = message[i];
+        if (found_apps.includes(current_app["global_id"])) continue;
+      
+        found_apps.push(current_app["global_id"]);
 
-        steam_scan_button.style.animation = "button-to-loading-reversed 1s ease forwards";
-        steam_scan_button.classList = "button add-game-buttons";
         let element_copy = base_game_found_list_element.cloneNode(true);
         element_copy.id = "";
+        element_copy.style.animationDelay = i*200 + "ms";
         element_copy.getElementsByClassName("add-game-found-list-element-name")[0].innerText = current_app["name"];
         element_copy.getElementsByTagName("img")[0].src = TM_BASE_URL + current_app["icon"];
         steam_scan_result_list.appendChild(element_copy);
       }
+      
+      steam_scan_button.style.animation = "button-to-loading-reversed 1s ease forwards";
+      steam_scan_button.classList = "button add-game-buttons";
+      steam_scan_loading = false;
     }).catch((error) => console.error(error));
   }, 1000)
 }
