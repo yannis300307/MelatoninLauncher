@@ -33,6 +33,7 @@ function add_game(name, image) {
     base_card_fake.style.left = (br.left - 10) + 'px';
     base_card_fake.style.top = br.top + 'px';
     base_card_fake.style.scale = 1;
+    base_card_fake.getElementsByClassName("game-img")[0].src = image;
 
     setTimeout(() => {
       page_games_list.style.height = 0;
