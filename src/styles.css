@@ -193,7 +193,7 @@ body {
   width: 280px;
   text-align: center;
   box-shadow: 0px 0px 3px var(--color4);
-  bottom: -80px;
+  bottom: -100px;
 
   transition: bottom 500ms ease;
 }

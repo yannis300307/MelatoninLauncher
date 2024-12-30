@@ -88,24 +88,13 @@ function steam_scan_clicked() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-  add_game("Hello Charlotte", "assets/game_img.jpg");
-
   document.getElementById("add-game-button").addEventListener("click", dispawn_game_page);
   document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
+
+  invoke("get_remote_available_patches").then((message) => {
+    console.log(message);
+    for (let i=0; i<message.length; i++) {
+      add_game(message[i]["name"], TM_BASE_URL+message[i]["card_image"]);
+    }
+  });
 });

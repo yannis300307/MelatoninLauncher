@@ -165,7 +165,47 @@ impl MelatoninInfo {
 }
 
 #[tauri::command]
-fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Vec<serde_json::Value>, String> {
+fn get_remote_available_patches(
+    state: tauri::State<'_, LauncherState>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let mut core = state.0.lock().unwrap();
+
+    if core.melatonin_info.is_none() {
+        match core.update_melatonin_info() {
+            Ok(_) => (),
+            Err(error) => {
+                return Err(format!("{:?}", error));
+            }
+        }
+    };
+    if let Some(melatonin_info) = &core.melatonin_info {
+        let mut games: Vec<serde_json::Value> = Vec::new();
+
+        for (global_id, patch) in melatonin_info.patches.iter() {
+            let app_info = melatonin_info.patches.get(global_id).unwrap();
+            games.push(json!({
+                "global_id": global_id,
+                "steam_id": app_info.steam_id,
+                "icon": app_info.icon,
+                "name": app_info.name,
+                "patch_version": app_info.patch_version,
+                "download_link": app_info.download_link,
+                "card_image": app_info.card_image,
+                "traductors": app_info.traductors,
+                "artits": app_info.artits,
+                "testers": app_info.testers,
+            }));
+        }
+        Ok(games)
+    } else {
+        Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_steam_installed_apps(
+    state: tauri::State<'_, LauncherState>,
+) -> Result<Vec<serde_json::Value>, String> {
     let mut core = state.0.lock().unwrap();
 
     if core.melatonin_info.is_none() {
@@ -239,14 +279,14 @@ fn get_steam_installed_apps(state: tauri::State<'_, LauncherState>) -> Result<Ve
 
 struct MelatoninLauncher {
     melatonin_info: Option<MelatoninInfo>,
-    registered_apps: Vec<RegisteredApp>
+    registered_apps: Vec<RegisteredApp>,
 }
 
 impl MelatoninLauncher {
     fn new() -> MelatoninLauncher {
         MelatoninLauncher {
             melatonin_info: None,
-            registered_apps: Vec::new()
+            registered_apps: Vec::new(),
         }
     }
 
@@ -270,7 +310,10 @@ pub fn run() {
     tauri::Builder::default()
         .manage(LauncherState(Mutex::new(MelatoninLauncher::new())))
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_steam_installed_apps])
+        .invoke_handler(tauri::generate_handler![
+            get_steam_installed_apps,
+            get_remote_available_patches
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
