@@ -235,7 +235,7 @@ body {
   background-image: linear-gradient(to top, var(--color1) calc(100% - 50px), rgba(255, 255, 255, 0));
 }
 
-#add-game-button {
+#reload-games-button {
   position: fixed;
   right: 20px;
   bottom: 20px;
@@ -253,16 +253,16 @@ body {
 
   transition: scale 300ms ease;
 
-  animation: spawn-add-game-button 1s ease 0s forwards;
+  animation: spawn-reload-games-button 1s ease 0s forwards;
 
   z-index: 80;
 }
 
-#add-game-button:hover {
+#reload-games-button:hover {
   scale: 1.1;
 }
 
-@keyframes spawn-add-game-button {
+@keyframes spawn-reload-games-button {
   0% {
     transform: translateY(120px);
     opacity: 0;
@@ -279,7 +279,7 @@ body {
   }
 }
 
-@keyframes dispawn-add-game-button {
+@keyframes dispawn-reload-games-button {
   0% {
     transform: translateY(0px);
     opacity: 1;
@@ -483,4 +483,21 @@ body {
 
 #base-game-found-list-element {
   display: none;
+}
+
+#notif-container {
+  position: fixed;
+  display: flex;
+  top: 0;
+  left: 20px;
+  width: calc(100% - 170px);
+  height: max-content;
+  border-radius: 20px;
+  background-color: var(--color2);
+  border: solid 4px var(--color4);
+  padding: 20px;
+
+  opacity: 0;
+  transform: translateY(100vh);
+  transition: opacity 1s ease, transform 1s ease;
 }
