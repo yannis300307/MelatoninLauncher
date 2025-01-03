@@ -26,6 +26,7 @@ function add_game(name, image) {
   page_games_list.appendChild(new_card);
 
   new_card.addEventListener('click', () => {
+    document.getElementById("reload-games-button").style.animation = "dispawn-reload-games-button 1s ease 0.2s forwards";
     var base_card_fake = document.getElementById("base_card_fake");
     var br = new_card.getBoundingClientRect();
     base_card_fake.style.display = "flex";
@@ -35,6 +36,7 @@ function add_game(name, image) {
     base_card_fake.style.top = br.top + 'px';
     base_card_fake.style.scale = 1;
     base_card_fake.getElementsByClassName("game-img")[0].src = image;
+    base_card_fake.style.animation = "card-zoom-transition 1s ease 0s forwards";
 
     setTimeout(() => {
       page_games_list.style.height = 0;
@@ -100,7 +102,7 @@ function steam_scan_clicked() {
   }, 1000)
 }
 
-function reload_game_cards(first_load=false) {
+function reload_game_cards(first_load = false) {
   let cards = document.querySelectorAll(".game-card:not(#base_card):not(#base_card_fake)");
 
   if (!first_load) document.getElementById("reload-games-button").style.animation = "dispawn-reload-games-button 1s ease 0.2s forwards";
@@ -129,8 +131,20 @@ function reload_game_cards(first_load=false) {
 
 }
 
+function close_game_page() {
+  base_card_fake.style.overflowY = "hidden";
+  base_card_fake.style.maxHeight = "0%";
+  page_games_list.style.height = "100%";
+  setTimeout(() => {
+    base_card_fake.style.animation = 'none';
+    base_card_fake.style.animation = "";
+    base_card_fake.style = "display: none;";
+  }, 1000);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("reload-games-button").addEventListener("click", () => {reload_game_cards(false)});
+  document.getElementById("reload-games-button").addEventListener("click", () => { reload_game_cards(false) });
+  document.getElementById("close-game-page-button").addEventListener("click", close_game_page);
   document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
 
   reload_game_cards(true);
