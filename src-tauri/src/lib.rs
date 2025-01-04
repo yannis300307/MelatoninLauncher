@@ -28,7 +28,7 @@ fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     let mut steam_path = match std::env::var("HOME") {
         Ok(data) => data,
         Err(error) => {
-            return Err(SteamPathDetectionError::CantFindSteamDirectory(
+            Err(SteamPathDetectionError::CantFindSteamDirectory(
                 "Impossible de trouver le dossier home.".to_string(),
             ))
         }
@@ -37,9 +37,9 @@ fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     if Path::exists(Path::new(&steam_path)) {
         Ok(steam_path)
     } else {
-        return Err(SteamPathDetectionError::CantFindSteamDirectory(
+        Err(SteamPathDetectionError::CantFindSteamDirectory(
             "Impssible de détecter Steam.".to_string(),
-        ));
+        ))
     }
 }
 
@@ -52,20 +52,15 @@ fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let steam_registry_info = match hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
         Ok(data) => data,
-        Err(_error) => {
-            return Err(SteamPathDetectionError::CantReadInRegistry(
-                "Impossible de trouver Steam dans le registre.".to_string(),
-            ))
-        }
+        Err(_error) => Err(SteamPathDetectionError::CantReadInRegistry(
+            "Impossible de trouver Steam dans le registre.".to_string(),
+        )),
     };
     let steam_path: String = match steam_registry_info.get_value("InstallPath") {
         Ok(data) => data,
-        Err(_error) => {
-            return Err(SteamPathDetectionError::CantReadInRegistry(
-                "La section du registre de Steam n'indique pas le dossier d'installation."
-                    .to_string(),
-            ))
-        }
+        Err(_error) => Err(SteamPathDetectionError::CantReadInRegistry(
+            "La section du registre de Steam n'indique pas le dossier d'installation.".to_string(),
+        )),
     };
 
     Ok(steam_path)
@@ -138,9 +133,7 @@ impl MelatoninInfo {
             Ok(data) => {
                 let infos: MelatoninInfo = match data.json() {
                     Ok(data) => data,
-                    Err(error) => {
-                        return Err(GetPatchesInfoError::CantReadFile(format!("{}", error)))
-                    }
+                    Err(error) => Err(GetPatchesInfoError::CantReadFile(format!("{}", error))),
                 };
 
                 Ok(infos)
@@ -176,9 +169,7 @@ fn get_remote_available_patches(
     if core.melatonin_info.is_none() {
         match core.update_melatonin_info() {
             Ok(_) => (),
-            Err(error) => {
-                return Err(format!("{:?}", error));
-            }
+            Err(error) => Err(format!("{:?}", error)),
         }
     };
     if let Some(melatonin_info) = &core.melatonin_info {
@@ -214,9 +205,7 @@ fn get_steam_installed_apps(
     if core.melatonin_info.is_none() {
         match core.update_melatonin_info() {
             Ok(_) => (),
-            Err(error) => {
-                return Err(format!("{:?}", error));
-            }
+            Err(error) => Err(format!("{:?}", error)),
         }
     }
 
@@ -225,12 +214,10 @@ fn get_steam_installed_apps(
         // Get the Steam path from the registry
         let steam_path = match get_steam_path() {
             Ok(data) => data,
-            Err(error) => {
-                return Err(format!(
-                    "Erreur de récupération du dossier de Steam: {:?}",
-                    error
-                ))
-            }
+            Err(error) => Err(format!(
+                "Erreur de récupération du dossier de Steam: {:?}",
+                error
+            )),
         };
 
         let file: File = match File::open(
@@ -239,12 +226,10 @@ fn get_steam_installed_apps(
                 .join("libraryfolders.vdf"),
         ) {
             Ok(data) => data,
-            Err(error) => {
-                return Err(format!(
-                    "Erreur de lecture du fichier LibraryFolder: {}",
-                    error
-                ))
-            }
+            Err(error) => Err(format!(
+                "Erreur de lecture du fichier LibraryFolder: {}",
+                error
+            )),
         };
 
         let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
