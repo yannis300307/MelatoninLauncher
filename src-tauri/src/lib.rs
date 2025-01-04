@@ -2,12 +2,15 @@
 
 use directories::ProjectDirs;
 use reqwest::blocking;
+use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::File;
+use std::io::Read;
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -124,7 +127,7 @@ struct Library {
 struct RegisteredApp {
     name: String,
     installation_path: String,
-    availbale_patch: Patch,
+    available_patch: Patch,
 }
 
 impl MelatoninInfo {
@@ -301,6 +304,58 @@ impl MelatoninLauncher {
             Err(error) => Err(error),
         }
     }
+
+    fn load_registered_apps() {
+        if let Some(project_dir) =
+            directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+        {
+            let registered_apps_file_path = project_dir
+                .config_dir()
+                .join(PathBuf::from("registered_apps.ron"));
+
+            let mut file: File = match File::open(registered_apps_file_path) {
+                Ok(data) => data,
+                Err(error) => return,
+            };
+
+            let mut file_content = String::new();
+            file.read_to_string(&mut file_content);
+            let data_result: Result<Vec<RegisteredApp>, ron::de::SpannedError> = ron::from_str(&file_content);
+
+            if let Ok(data) = data_result {
+                for patch in data {
+                    println!("{:?}", patch);
+                }
+            }
+        }
+    }
+
+    fn save_registered_apps(&mut self) {
+        if let Some(project_dir) =
+            directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+        {
+            let registered_apps_file_path = project_dir
+                .config_dir()
+                .join(PathBuf::from("registered_apps.ron"));
+
+            let mut file: File = match File::open(registered_apps_file_path) {
+                Ok(data) => data,
+                Err(error) => return,
+            };
+
+            if let Ok(serialised) = ron::to_string(&self.registered_apps) {
+                file.write_all(serialised.as_bytes());
+            }
+            println!("OK");
+        }
+    }
+}
+
+#[tauri::command]
+fn loading_finished(state: tauri::State<'_, LauncherState>) {
+    let mut core = state.0.lock().unwrap();
+
+    core.save_registered_apps();
 }
 
 struct LauncherState(pub Mutex<MelatoninLauncher>);
@@ -312,7 +367,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_steam_installed_apps,
-            get_remote_available_patches
+            get_remote_available_patches,
+            loading_finished,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

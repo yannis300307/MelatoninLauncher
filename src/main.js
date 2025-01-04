@@ -148,4 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
 
   reload_game_cards(true);
+
+  invoke("loading_finished");
 });
