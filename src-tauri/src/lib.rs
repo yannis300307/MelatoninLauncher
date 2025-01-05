@@ -167,6 +167,42 @@ impl MelatoninInfo {
     }
 }
 
+fn get_installed_apps_steam_id() -> Result<Vec<String>, String> {
+    let steam_path = match get_steam_path() {
+        Ok(data) => data,
+        Err(error) => {
+            return Err(format!(
+                "Erreur de récupération du dossier de Steam: {:?}",
+                error
+            ))
+        }
+    };
+
+    let file: File = match File::open(
+        Path::new(&steam_path)
+            .join("steamapps")
+            .join("libraryfolders.vdf"),
+    ) {
+        Ok(data) => data,
+        Err(error) => {
+            return Err(format!(
+                "Erreur de lecture du fichier LibraryFolder: {}",
+                error
+            ))
+        }
+    };
+
+    let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
+
+    let mut apps_id: Vec<String> = Vec::new();
+
+    for folder in folders.folders.values() {
+        apps_id.extend(folder.apps.keys().map(|i| i.to_owned()));
+    }
+
+    Ok(apps_id)
+}
+
 #[tauri::command]
 fn get_remote_available_patches(
     state: tauri::State<'_, LauncherState>,
@@ -181,11 +217,22 @@ fn get_remote_available_patches(
             }
         }
     };
+
+    let installed_steam_ids = get_installed_apps_steam_id();
+
     if let Some(melatonin_info) = &core.melatonin_info {
         let mut games: Vec<serde_json::Value> = Vec::new();
 
         for (global_id, patch) in melatonin_info.patches.iter() {
             let app_info = melatonin_info.patches.get(global_id).unwrap();
+            let installed_on_steam = {
+                if let Ok(ids) = &installed_steam_ids {
+                    ids.contains(&app_info.steam_id)
+                } else {
+                    false
+                }
+            };
+
             games.push(json!({
                 "global_id": global_id,
                 "steam_id": app_info.steam_id,
@@ -197,6 +244,7 @@ fn get_remote_available_patches(
                 "traductors": app_info.traductors,
                 "artits": app_info.artits,
                 "testers": app_info.testers,
+                "installed_on_steam": installed_on_steam,
             }));
         }
         Ok(games)
@@ -320,7 +368,8 @@ impl MelatoninLauncher {
 
             let mut file_content = String::new();
             file.read_to_string(&mut file_content);
-            let data_result: Result<Vec<RegisteredApp>, ron::de::SpannedError> = ron::from_str(&file_content);
+            let data_result: Result<Vec<RegisteredApp>, ron::de::SpannedError> =
+                ron::from_str(&file_content);
 
             if let Ok(data) = data_result {
                 for patch in data {
