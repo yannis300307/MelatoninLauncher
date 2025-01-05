@@ -71,13 +71,13 @@ fn get_steam_path() -> Result<String, SteamPathDetectionError> {
     Ok(steam_path)
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct MelatoninInfo {
     contacts: HashMap<String, Contact>,
     patches: HashMap<String, Patch>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct Contact {
     name: String,
     role: String,
@@ -85,14 +85,14 @@ struct Contact {
     contacts: Vec<ContactSocial>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct ContactSocial {
     name: String,
     icon: String,
     url: String,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 struct Patch {
     name: String,
     patch_version: String,
@@ -202,6 +202,44 @@ fn get_installed_apps_steam_id() -> Result<Vec<String>, String> {
     }
 
     Ok(apps_id)
+}
+
+#[tauri::command]
+fn register_app_from_steam(
+    state: tauri::State<'_, LauncherState>,
+    global_id: String,
+) -> Result<(), String> {
+    let mut core = state.0.lock().unwrap();
+
+    if core.melatonin_info.is_none() {
+        match core.update_melatonin_info() {
+            Ok(_) => (),
+            Err(error) => {
+                return Err(format!("{:?}", error));
+            }
+        }
+    };
+    
+    if let Some(melatonin_info) = &core.melatonin_info {
+        let linked_steam_id = melatonin_info.link_steam_id_to_global();
+
+        if let Some(patch) = melatonin_info.patches.get(&global_id) {
+
+            let name = patch.name.to_owned();
+            let available_patch = patch.to_owned();
+
+            core.registered_apps.push(RegisteredApp {
+                global_id,
+                name,
+                installation_path: "".to_string(),
+                available_patch,
+            });
+        }
+    };
+
+    core.save_registered_apps()?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -322,32 +360,35 @@ impl MelatoninLauncher {
         }
     }
 
-    fn save_registered_apps(&mut self) {
+    fn save_registered_apps(&mut self) -> Result<(), String> {
+        println!("saving registered apps...");
         if let Some(project_dir) =
             directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
         {
+            if let Err(error) = fs::create_dir_all(project_dir.config_dir()) {
+                return Err(error.to_string());
+            };
             let registered_apps_file_path = project_dir
                 .config_dir()
                 .join(PathBuf::from("registered_apps.ron"));
 
-            let mut file: File = match File::open(registered_apps_file_path) {
+            let mut file: File = match File::create(registered_apps_file_path) {
                 Ok(data) => data,
-                Err(error) => return,
+                Err(error) => return Err("Impossible d'ouvrir le fichier d'enregistrement des applications enregistrées.".to_string()),
             };
 
             if let Ok(serialised) = ron::to_string(&self.registered_apps) {
                 file.write_all(serialised.as_bytes());
             }
             println!("OK");
-        }
+        };
+        Ok(())
     }
 }
 
 #[tauri::command]
 fn loading_finished(state: tauri::State<'_, LauncherState>) {
     let mut core = state.0.lock().unwrap();
-
-    core.save_registered_apps();
 }
 
 struct LauncherState(pub Mutex<MelatoninLauncher>);
@@ -360,6 +401,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_remote_available_patches,
             loading_finished,
+            register_app_from_steam,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
