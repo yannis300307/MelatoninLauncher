@@ -16,11 +16,13 @@ const TM_BASE_URL = "https://team-melatonin.fr/";
 var found_apps = [];
 var steam_scan_loading = false;
 
-function add_game(name, image) {
+function add_game(info) {
+  let image = TM_BASE_URL + info["card_image"];
+
   const new_card = base_card.cloneNode(true);
   new_card.id = "card_" + last_card_id;
   new_card.style = "";
-  new_card.getElementsByClassName("card-name")[0].innerText = name;
+  new_card.getElementsByClassName("card-name")[0].innerText = info["name"];
   new_card.getElementsByClassName("game-img")[0].src = image;
   new_card.style = "animation-delay: " + (800 + last_card_id * card_delay) + "ms"
   page_games_list.appendChild(new_card);
@@ -36,6 +38,7 @@ function add_game(name, image) {
     base_card_fake.style.top = br.top + 'px';
     base_card_fake.style.scale = 1;
     base_card_fake.getElementsByClassName("game-img")[0].src = image;
+    base_card_fake.querySelector("#game-version-label").innerText = "version du patch : " + info["patch_version"];
     base_card_fake.style.animation = "card-zoom-transition 1s ease 0s forwards";
 
     setTimeout(() => {
@@ -120,7 +123,7 @@ function reload_game_cards(first_load = false) {
     invoke("get_remote_available_patches").then((message) => {
       console.log(message);
       for (let i = 0; i < message.length; i++) {
-        add_game(message[i]["name"], TM_BASE_URL + message[i]["card_image"]);
+        add_game(message[i]);
       }
     }).catch((error) => {
       show_notif("Impossible de récupérer la liste des patchs. Veuillez vérifier votre connexion à Internet. Erreur du backend : " + error, 15000);

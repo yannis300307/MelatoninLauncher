@@ -130,17 +130,17 @@ body {
   transition: max-height 1s ease;
 }
 
-.game-card-fake .game-img{
+.game-card-fake .game-img {
   animation: card-image-to-header 1s ease 0s forwards;
 }
 
 @keyframes card-zoom-transition {
-  0% {
-  }
+  0% {}
 
-  100%{
+  100% {
     left: -10px;
-    top: 0px;       /*remove border width and offset*/
+    top: 0px;
+    /*remove border width and offset*/
     width: 100vw;
     height: 100vh;
     border-radius: 0px;
@@ -149,9 +149,9 @@ body {
 }
 
 @keyframes card-image-to-header {
-  0% {
-  }
-  100%{
+  0% {}
+
+  100% {
     max-width: 100%;
     max-height: 200%;
   }
@@ -207,7 +207,8 @@ body {
   width: 200%;
   height: auto;
   max-width: 200%;
-  max-height: 100%; /*transition from width 100% to height 100%*/
+  max-height: 100%;
+  /*transition from width 100% to height 100%*/
   min-height: 300px;
   position: absolute;
   object-fit: contain;
@@ -306,6 +307,8 @@ body {
   cursor: pointer;
   transition: box-shadow 300ms ease;
   box-shadow: 0px 0px 0px var(--color3);
+  text-decoration: none;
+  color: inherit;
 }
 
 .button:hover {
@@ -339,6 +342,7 @@ body {
 
 @keyframes button-to-loading {
   0% {}
+
   20% {
     color: transparent;
     width: 250px;
@@ -367,6 +371,7 @@ body {
 
 @keyframes button-to-loading-reversed {
   100% {}
+
   80% {
     color: transparent;
     width: 250px;
@@ -415,7 +420,7 @@ body {
 .add-game-found-list-element {
   background-color: var(--color2);
   margin: 4px;
-  border: solid 2px ;
+  border: solid 2px;
   border-radius: 4px;
   height: 40px;
   display: flex;
@@ -446,7 +451,8 @@ body {
   background-color: var(--color1);
 }
 
-.checkbox input { /*Hide default*/
+.checkbox input {
+  /*Hide default*/
   position: absolute;
   opacity: 0;
   cursor: pointer;
@@ -477,13 +483,13 @@ body {
   cursor: pointer;
 }
 
-.checkbox input:checked ~ .checkbox-custom {
+.checkbox input:checked~.checkbox-custom {
   background-color: var(--color3);
   color: #F29F58;
 }
 
 
-.checkbox:hover input ~ .checkbox-custom {
+.checkbox:hover input~.checkbox-custom {
   box-shadow: 0px 0px 4px var(--color4);
 }
 
@@ -540,8 +546,8 @@ body {
 }
 
 #game-version-label {
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
+  margin-bottom: 0;
 }
 
 #launch-game-button {
@@ -554,4 +560,16 @@ body {
 
 #game-page-main-buttons {
   margin: auto;
+  display: flex;
+}
+
+.big-buttons {
+  height: 50px;
+  width: 300px;
+  display: flex;
+  text-align: center;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  margin: 10px;
 }
