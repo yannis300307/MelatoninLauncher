@@ -565,6 +565,7 @@ body {
 #game-page-main-buttons {
   margin: auto;
   display: flex;
+  align-items: center;
 }
 
 .big-buttons {
@@ -576,4 +577,34 @@ body {
   justify-content: center;
   align-items: center;
   margin: 10px;
+}
+
+@keyframes dispawn-big-button {
+  0% {}
+  20% {
+    color: transparent;
+  }
+
+  100% {
+    width: 0px;
+    padding: 0px;
+    margin: 0px;
+    color: transparent;
+    border-width: 0;
+  }
+}
+
+@keyframes dispawn-big-button-reversed {
+  100% {}
+  80% {
+    color: transparent;
+  }
+
+  0% {
+    width: 0px;
+    padding: 0px;
+    margin: 0px;
+    color: transparent;
+    border-width: 0;
+  }
 }
