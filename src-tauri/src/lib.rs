@@ -127,6 +127,7 @@ struct Library {
 struct RegisteredApp {
     name: String,
     installation_path: String,
+    global_id: String,
     available_patch: Patch,
 }
 
@@ -218,113 +219,46 @@ fn get_remote_available_patches(
         }
     };
 
-    let installed_steam_ids = get_installed_apps_steam_id();
-
     if let Some(melatonin_info) = &core.melatonin_info {
-        let mut games: Vec<serde_json::Value> = Vec::new();
-
-        for (global_id, patch) in melatonin_info.patches.iter() {
-            let app_info = melatonin_info.patches.get(global_id).unwrap();
-            let installed_on_steam = {
-                if let Ok(ids) = &installed_steam_ids {
-                    ids.contains(&app_info.steam_id)
-                } else {
-                    false
-                }
-            };
-
-            games.push(json!({
-                "global_id": global_id,
-                "steam_id": app_info.steam_id,
-                "icon": app_info.icon,
-                "name": app_info.name,
-                "patch_version": app_info.patch_version,
-                "download_link": app_info.download_link,
-                "card_image": app_info.card_image,
-                "traductors": app_info.traductors,
-                "artits": app_info.artits,
-                "testers": app_info.testers,
-                "installed_on_steam": installed_on_steam,
-            }));
-        }
-        Ok(games)
-    } else {
-        Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
-    }
-}
-
-#[tauri::command]
-fn get_steam_installed_apps(
-    state: tauri::State<'_, LauncherState>,
-) -> Result<Vec<serde_json::Value>, String> {
-    let mut core = state.0.lock().unwrap();
-
-    if core.melatonin_info.is_none() {
-        match core.update_melatonin_info() {
-            Ok(_) => (),
-            Err(error) => {
-                return Err(format!("{:?}", error));
-            }
-        }
-    }
-
-    if let Some(melatonin_info) = &core.melatonin_info {
-        let available_patches = melatonin_info.get_available_patches();
-        // Get the Steam path from the registry
-        let steam_path = match get_steam_path() {
-            Ok(data) => data,
-            Err(error) => {
-                return Err(format!(
-                    "Erreur de récupération du dossier de Steam: {:?}",
-                    error
-                ))
-            }
-        };
-
-        let file: File = match File::open(
-            Path::new(&steam_path)
-                .join("steamapps")
-                .join("libraryfolders.vdf"),
-        ) {
-            Ok(data) => data,
-            Err(error) => {
-                return Err(format!(
-                    "Erreur de lecture du fichier LibraryFolder: {}",
-                    error
-                ))
-            }
-        };
-
-        let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
-
+        let installed_steam_ids = get_installed_apps_steam_id();
         let linked_steam_id = melatonin_info.link_steam_id_to_global();
 
-        let mut games: Vec<serde_json::Value> = Vec::new();
+        if let Some(melatonin_info) = &core.melatonin_info {
+            let mut games: Vec<serde_json::Value> = Vec::new();
 
-        for folder in folders.folders.values() {
-            for app in folder.apps.keys() {
-                if available_patches.contains(app) {
-                    let global_id = linked_steam_id.get(app).unwrap();
-                    let app_info = melatonin_info.patches.get(global_id).unwrap();
-                    games.push(json!({
-                        "global_id": global_id,
-                        "steam_id": app_info.steam_id,
-                        "icon": app_info.icon,
-                        "name": app_info.name,
-                        "patch_version": app_info.patch_version,
-                        "download_link": app_info.download_link,
-                        "card_image": app_info.card_image,
-                        "traductors": app_info.traductors,
-                        "artits": app_info.artits,
-                        "testers": app_info.testers,
-                    }));
-                }
+            for (global_id, patch) in melatonin_info.patches.iter() {
+                let app_info = melatonin_info.patches.get(global_id).unwrap();
+                let installed_on_steam = {
+                    if let Ok(ids) = &installed_steam_ids {
+                        ids.contains(&app_info.steam_id)
+                    } else {
+                        false
+                    }
+                };
+
+                let registered = core.get_game_is_registered(global_id);
+
+                games.push(json!({
+                    "global_id": global_id,
+                    "steam_id": app_info.steam_id,
+                    "icon": app_info.icon,
+                    "name": app_info.name,
+                    "patch_version": app_info.patch_version,
+                    "download_link": app_info.download_link,
+                    "card_image": app_info.card_image,
+                    "traductors": app_info.traductors,
+                    "artits": app_info.artits,
+                    "testers": app_info.testers,
+                    "installed_on_steam": installed_on_steam,
+                    "registered": registered,
+                }));
             }
+            Ok(games)
+        } else {
+            Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
         }
-
-        Ok(games)
     } else {
-        Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
+        Err("Internet is unavailable.".to_string())
     }
 }
 
@@ -351,6 +285,15 @@ impl MelatoninLauncher {
             }
             Err(error) => Err(error),
         }
+    }
+
+    fn get_game_is_registered(&self, global_id: &String) -> bool {
+        for app in &self.registered_apps {
+            if app.global_id == *global_id {
+                return true;
+            }
+        }
+        false
     }
 
     fn load_registered_apps() {
@@ -415,7 +358,6 @@ pub fn run() {
         .manage(LauncherState(Mutex::new(MelatoninLauncher::new())))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            get_steam_installed_apps,
             get_remote_available_patches,
             loading_finished,
         ])
