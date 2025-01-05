@@ -238,6 +238,7 @@ body {
   width: 100%;
   height: 100%;
   background-image: linear-gradient(to top, var(--color1) calc(100% - 50px), rgba(255, 255, 255, 0));
+  display: flex;
 }
 
 #reload-games-button {
@@ -522,8 +523,35 @@ body {
   cursor: pointer;
   z-index: 120;
   user-select: none;
+  transition: scale 300ms ease;
 }
 
 #close-game-page-button:hover {
-  
+  scale: 1.1;
+}
+
+#game-page-footer {
+  position: fixed;
+  bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+#game-version-label {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#launch-game-button {
+  margin-left: 20px;
+}
+
+#game-credits-button {
+  margin-right: 20px;
+}
+
+#game-page-main-buttons {
+  margin: auto;
 }
