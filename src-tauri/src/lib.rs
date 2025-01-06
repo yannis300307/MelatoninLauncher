@@ -228,8 +228,8 @@ fn register_app_from_steam(
             let name = patch.name.to_owned();
             let available_patch = patch.to_owned();
 
-            core.registered_apps.push(RegisteredApp {
-                global_id,
+            core.registered_apps.insert(global_id.clone(), RegisteredApp {
+                global_id: global_id.clone(),
                 name,
                 installation_path: "".to_string(),
                 available_patch,
@@ -302,14 +302,14 @@ fn get_remote_available_patches(
 
 struct MelatoninLauncher {
     melatonin_info: Option<MelatoninInfo>,
-    registered_apps: Vec<RegisteredApp>,
+    registered_apps: HashMap<String, RegisteredApp>,
 }
 
 impl MelatoninLauncher {
     fn new() -> MelatoninLauncher {
         MelatoninLauncher {
             melatonin_info: None,
-            registered_apps: Vec::new(),
+            registered_apps: HashMap::new(),
         }
     }
 
@@ -326,8 +326,8 @@ impl MelatoninLauncher {
     }
 
     fn get_game_is_registered(&self, global_id: &String) -> bool {
-        for app in &self.registered_apps {
-            if app.global_id == *global_id {
+        for app in self.registered_apps.keys() {
+            if *app == *global_id {
                 return true;
             }
         }
