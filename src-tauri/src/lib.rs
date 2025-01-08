@@ -118,6 +118,13 @@ struct LibraryFolders {
 }
 
 #[derive(Deserialize, Debug)]
+struct SteamAppInfo {
+    appid: String,
+    installdir: String,
+
+}
+
+#[derive(Deserialize, Debug)]
 struct Library {
     path: PathBuf,
     apps: HashMap<String, String>,
@@ -166,6 +173,57 @@ impl MelatoninInfo {
         }
         patches_link
     }
+}
+
+fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
+    let steam_path = match get_steam_path() {
+        Ok(data) => data,
+        Err(error) => {
+            return Err(format!(
+                "Erreur de récupération du dossier de Steam: {:?}",
+                error
+            ))
+        }
+    };
+
+    let file: File = match File::open(
+        Path::new(&steam_path)
+            .join("steamapps")
+            .join("libraryfolders.vdf"),
+    ) {
+        Ok(data) => data,
+        Err(error) => {
+            return Err(format!(
+                "Erreur de lecture du fichier LibraryFolder: {}",
+                error
+            ))
+        }
+    };
+
+    let folders: LibraryFolders = keyvalues_serde::from_reader(file).unwrap();
+
+    for folder in folders.folders.values() {
+        for current_steam_id in folder.apps.keys() {
+            if (*current_steam_id == *steam_id) {
+
+                let file: File = match File::open(
+                    Path::new(&folder.path)
+                        .join("steamapps")
+                        .join(format!("appmanifest_{}.acf", steam_id)),
+                ) {
+                    Ok(data) => data,
+                    Err(error) => {
+                        return Err("Erreur de lecture du fichier AppManifest. Si votre jeu est sur un disque externe, assurez vous qu'il est bien connecté.".to_string())
+                    }
+                };
+                let mut app_info: SteamAppInfo = keyvalues_serde::from_reader(file).unwrap();
+                app_info.installdir = Path::new(&folder.path).join("steamapps").join(app_info.installdir).into_os_string().into_string().unwrap();
+                return Ok(app_info);
+            }
+        }
+    }
+
+    Err("Impossible d'ouvrir AppManifest. Veuillez réinstaller le jeu.".to_string())
 }
 
 fn get_installed_apps_steam_id() -> Result<Vec<String>, String> {
@@ -227,11 +285,12 @@ fn register_app_from_steam(
 
             let name = patch.name.to_owned();
             let available_patch = patch.to_owned();
+            let app = get_steam_app_info(&patch.steam_id)?;
 
             core.registered_apps.insert(global_id.clone(), RegisteredApp {
                 global_id: global_id.clone(),
                 name,
-                installation_path: "".to_string(),
+                installation_path: app.installdir,
                 available_patch,
             });
         }
@@ -296,7 +355,7 @@ fn get_remote_available_patches(
             Err("Impossible de récupérer les informations de patch sur le serveur.".to_string())
         }
     } else {
-        Err("Internet is unavailable.".to_string())
+        Err("Vous semblez ne pas être connecté à Internet.".to_string())
     }
 }
 
