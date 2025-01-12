@@ -62,11 +62,23 @@ function add_game(info) {
       base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear";
       base_card_fake.querySelector("#manual-add-game-button").style.animation = "dispawn-big-button 500ms ease forwards";
 
-      invoke("register_app_from_steam", { globalId: info["global_id"] }).catch((error) => { console.error(error); });
+
 
       setTimeout(() => {
-        base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading-reversed 1s ease forwards";
-        base_card_fake.querySelector("#manual-add-game-button").style.animation = "dispawn-big-button-reversed 500ms ease forwards";
+        let got_error = false;
+        invoke("register_app_from_steam", { globalId: info["global_id"] }).catch((error) => {
+          console.error(error);
+          base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear, move-up-infinite-loading-button 4s ease";
+          got_error = true;
+        }).then(
+          () => {
+            setTimeout(() => {
+              base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading-reversed 1s ease forwards";
+              base_card_fake.querySelector("#manual-add-game-button").style.animation = "dispawn-big-button-reversed 500ms ease forwards";
+            }, got_error? 4000:0);
+          }
+
+        );
       }, 1000) // hide all cards
     });
 
