@@ -614,6 +614,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
+  display: none;
 }
 
 @keyframes show-game-scan-info-label {
@@ -639,10 +640,10 @@ body {
     transform: translateY(0px);
   }
   10% {
-    transform: translateY(-200px);
+    transform: translateY(-50px);
   }
   90% {
-    transform: translateY(-200px);
+    transform: translateY(-50px);
   }
   100% {
     transform: translateY(0px);

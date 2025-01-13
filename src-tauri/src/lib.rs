@@ -213,7 +213,7 @@ fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
                 ) {
                     Ok(data) => data,
                     Err(error) => {
-                        return Err("Erreur de lecture du fichier AppManifest. Si votre jeu est sur un disque externe, assurez vous qu'il est bien connecté.".to_string())
+                        return Err("Erreur de lecture du fichier AppManifest. Si votre jeu est sur un disque externe, assurez vous qu'il soit bien connecté.".to_string())
                     }
                 };
                 let mut app_info: SteamAppInfo = keyvalues_serde::from_reader(file).unwrap();
