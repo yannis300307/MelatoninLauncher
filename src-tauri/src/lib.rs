@@ -393,7 +393,7 @@ impl MelatoninLauncher {
         false
     }
 
-    fn load_registered_apps() {
+    fn load_registered_apps(&mut self) -> Result<(), String> {
         if let Some(project_dir) =
             directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
         {
@@ -403,20 +403,24 @@ impl MelatoninLauncher {
 
             let mut file: File = match File::open(registered_apps_file_path) {
                 Ok(data) => data,
-                Err(error) => return,
+                Err(error) => return Err("Impossible d'ouvrir le fichier des apps enregistrées.".to_string()),
             };
 
             let mut file_content = String::new();
             file.read_to_string(&mut file_content);
-            let data_result: Result<Vec<RegisteredApp>, ron::de::SpannedError> =
+
+            let data_result: Result<HashMap<String, RegisteredApp>, ron::de::SpannedError> =
                 ron::from_str(&file_content);
 
             if let Ok(data) = data_result {
                 for patch in data {
-                    println!("{:?}", patch);
+                    self.registered_apps.insert(patch.0, patch.1);
                 }
+            } else {
+                return Err("Impossible de charger le fichier des apps installées.".to_string());
             }
         }
+        Ok(())
     }
 
     fn save_registered_apps(&mut self) -> Result<(), String> {
@@ -448,6 +452,10 @@ impl MelatoninLauncher {
 #[tauri::command]
 fn loading_finished(state: tauri::State<'_, LauncherState>) {
     let mut core = state.0.lock().unwrap();
+
+    core.load_registered_apps();
+    
+    println!("Loading finished");
 }
 
 struct LauncherState(pub Mutex<MelatoninLauncher>);

@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("reload-games-button").addEventListener("click", () => { reload_game_cards(false) });
   document.getElementById("close-game-page-button").addEventListener("click", close_game_page);
   document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
-  document.getElementById("switch-theme-button").addEventListener("click");
+  //document.getElementById("switch-theme-button").addEventListener("click");
 
   reload_game_cards(true);
 
