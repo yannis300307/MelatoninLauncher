@@ -136,6 +136,7 @@ struct RegisteredApp {
     installation_path: String,
     global_id: String,
     available_patch: Patch,
+    patch_activated: bool,
 }
 
 impl MelatoninInfo {
@@ -292,6 +293,7 @@ fn register_app_from_steam(
                 name,
                 installation_path: app.installdir,
                 available_patch,
+                patch_activated: false,
             });
         }
     };
@@ -334,6 +336,7 @@ fn get_remote_available_patches(
                 };
 
                 let registered = core.get_game_is_registered(global_id);
+                let patch_activated = core.get_game_patch_activated(global_id);
 
                 games.push(json!({
                     "global_id": global_id,
@@ -348,6 +351,7 @@ fn get_remote_available_patches(
                     "testers": app_info.testers,
                     "installed_on_steam": installed_on_steam,
                     "registered": registered,
+                    "patch_activated": patch_activated,
                 }));
             }
             Ok(games)
@@ -388,6 +392,15 @@ impl MelatoninLauncher {
         for app in self.registered_apps.keys() {
             if *app == *global_id {
                 return true;
+            }
+        }
+        false
+    }
+
+    fn get_game_patch_activated(&self, global_id: &String) -> bool {
+        for app in &self.registered_apps {
+            if *app.0 == *global_id {
+                return app.1.patch_activated;
             }
         }
         false
