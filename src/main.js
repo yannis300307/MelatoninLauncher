@@ -91,6 +91,20 @@ function add_game(info) {
   last_card_id++;
 }
 
+function set_theme(name) {
+  if (name === "light") {
+    document.documentElement.style.setProperty('--color1', '#fdf3de');
+    document.documentElement.style.setProperty('--color2', '#9c628b');
+    document.documentElement.style.setProperty('--color3', '#555555bf');
+    document.documentElement.style.setProperty('--color4', '#553546');
+  } else if (name == "dark") {
+    document.documentElement.style.setProperty('--color1', '#1B1833');
+    document.documentElement.style.setProperty('--color2', '#441752');
+    document.documentElement.style.setProperty('--color3', '#AB4459');
+    document.documentElement.style.setProperty('--color4', '#F29F58');
+  }
+}
+
 function show_notif(text, delay) {
   notif_container.innerText = text;
   notif_container.style.transform = "translateY(calc(100vh - " + Math.max(notif_container.getBoundingClientRect().height + 20) + "px))";
@@ -194,4 +208,6 @@ document.addEventListener("DOMContentLoaded", () => {
   reload_game_cards(true);
 
   invoke("loading_finished");
+
+  set_theme("light");
 });
