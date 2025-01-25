@@ -16,6 +16,8 @@ const TM_BASE_URL = "https://team-melatonin.fr/";
 var found_apps = [];
 var steam_scan_loading = false;
 
+var theme = "light";
+
 function add_game(info) {
   let image = TM_BASE_URL + info["card_image"];
 
@@ -110,6 +112,7 @@ function add_game(info) {
 }
 
 function set_theme(name) {
+  theme = name;
   if (name === "light") {
     document.documentElement.style.setProperty('--color1', '#fdf3de');
     document.documentElement.style.setProperty('--color2', '#9c628b');
@@ -120,6 +123,14 @@ function set_theme(name) {
     document.documentElement.style.setProperty('--color2', '#441752');
     document.documentElement.style.setProperty('--color3', '#AB4459');
     document.documentElement.style.setProperty('--color4', '#F29F58');
+  }
+}
+
+function switchTheme() {
+  if (theme === "dark") {
+    set_theme("light");
+  } else if (theme === "light") {
+    set_theme("dark");
   }
 }
 
@@ -221,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("reload-games-button").addEventListener("click", () => { reload_game_cards(false) });
   document.getElementById("close-game-page-button").addEventListener("click", close_game_page);
   document.getElementById("steam-scan-button").addEventListener("click", steam_scan_clicked);
-  //document.getElementById("switch-theme-button").addEventListener("click");
+  document.getElementById("switch-theme-button").addEventListener("click", switchTheme);
 
   reload_game_cards(true);
 

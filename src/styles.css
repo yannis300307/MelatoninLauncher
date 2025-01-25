@@ -14,6 +14,10 @@
   --color4: #F29F58;*/
 }
 
+* {
+  transition: color 500ms ease, background-color 500ms ease;
+}
+
 body {
   background-color: var(--color1);
   color: var(--color4);
