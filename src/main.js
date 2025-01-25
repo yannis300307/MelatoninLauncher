@@ -104,7 +104,7 @@ function add_game(info) {
 
     setTimeout(() => {
       page_games_list.style.height = 0;
-      base_card_fake.style.overflowY = "scroll";
+      base_card_fake.style.overflowY = "hidden";
     }, 1000) // hide all cards
   });
 
