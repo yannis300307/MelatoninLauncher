@@ -379,7 +379,6 @@ body {
   80% {
     color: transparent;
     width: 250px;
-    height: 20px;
     border-radius: 5px;
   }
 
@@ -606,5 +605,46 @@ body {
     margin: 0px;
     color: transparent;
     border-width: 0;
+  }
+}
+
+#game-scan-info-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  display: none;
+}
+
+@keyframes show-game-scan-info-label {
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes move-up-infinite-loading-button {
+  0% {
+    transform: translateY(0px);
+  }
+  10% {
+    transform: translateY(-50px);
+  }
+  90% {
+    transform: translateY(-50px);
+  }
+  100% {
+    transform: translateY(0px);
   }
 }

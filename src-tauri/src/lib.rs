@@ -2,6 +2,7 @@
 
 use directories::ProjectDirs;
 use reqwest::blocking;
+use reqwest::header::TE;
 use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -121,7 +122,6 @@ struct LibraryFolders {
 struct SteamAppInfo {
     appid: String,
     installdir: String,
-
 }
 
 #[derive(Deserialize, Debug)]
@@ -136,6 +136,7 @@ struct RegisteredApp {
     installation_path: String,
     global_id: String,
     available_patch: Patch,
+    patch_activated: bool,
 }
 
 impl MelatoninInfo {
@@ -205,7 +206,6 @@ fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
     for folder in folders.folders.values() {
         for current_steam_id in folder.apps.keys() {
             if (*current_steam_id == *steam_id) {
-
                 let file: File = match File::open(
                     Path::new(&folder.path)
                         .join("steamapps")
@@ -213,11 +213,16 @@ fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
                 ) {
                     Ok(data) => data,
                     Err(error) => {
-                        return Err("Erreur de lecture du fichier AppManifest. Si votre jeu est sur un disque externe, assurez vous qu'il est bien connecté.".to_string())
+                        return Err("Erreur de lecture du fichier AppManifest. Si votre jeu est sur un disque externe, assurez vous qu'il soit bien connecté.".to_string())
                     }
                 };
                 let mut app_info: SteamAppInfo = keyvalues_serde::from_reader(file).unwrap();
-                app_info.installdir = Path::new(&folder.path).join("steamapps").join(app_info.installdir).into_os_string().into_string().unwrap();
+                app_info.installdir = Path::new(&folder.path)
+                    .join("steamapps")
+                    .join(app_info.installdir)
+                    .into_os_string()
+                    .into_string()
+                    .unwrap();
                 return Ok(app_info);
             }
         }
@@ -277,22 +282,25 @@ fn register_app_from_steam(
             }
         }
     };
-    
+
     if let Some(melatonin_info) = &core.melatonin_info {
         let linked_steam_id = melatonin_info.link_steam_id_to_global();
 
         if let Some(patch) = melatonin_info.patches.get(&global_id) {
-
             let name = patch.name.to_owned();
             let available_patch = patch.to_owned();
             let app = get_steam_app_info(&patch.steam_id)?;
 
-            core.registered_apps.insert(global_id.clone(), RegisteredApp {
-                global_id: global_id.clone(),
-                name,
-                installation_path: app.installdir,
-                available_patch,
-            });
+            core.registered_apps.insert(
+                global_id.clone(),
+                RegisteredApp {
+                    global_id: global_id.clone(),
+                    name,
+                    installation_path: app.installdir,
+                    available_patch,
+                    patch_activated: false,
+                },
+            );
         }
     };
 
@@ -334,6 +342,7 @@ fn get_remote_available_patches(
                 };
 
                 let registered = core.get_game_is_registered(global_id);
+                let patch_activated = core.get_game_patch_activated(global_id);
 
                 games.push(json!({
                     "global_id": global_id,
@@ -348,6 +357,7 @@ fn get_remote_available_patches(
                     "testers": app_info.testers,
                     "installed_on_steam": installed_on_steam,
                     "registered": registered,
+                    "patch_activated": patch_activated,
                 }));
             }
             Ok(games)
@@ -393,7 +403,16 @@ impl MelatoninLauncher {
         false
     }
 
-    fn load_registered_apps() {
+    fn get_game_patch_activated(&self, global_id: &String) -> bool {
+        for app in &self.registered_apps {
+            if *app.0 == *global_id {
+                return app.1.patch_activated;
+            }
+        }
+        false
+    }
+
+    fn load_registered_apps(&mut self) -> Result<(), String> {
         if let Some(project_dir) =
             directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
         {
@@ -403,20 +422,26 @@ impl MelatoninLauncher {
 
             let mut file: File = match File::open(registered_apps_file_path) {
                 Ok(data) => data,
-                Err(error) => return,
+                Err(error) => {
+                    return Err("Impossible d'ouvrir le fichier des apps enregistrées.".to_string())
+                }
             };
 
             let mut file_content = String::new();
             file.read_to_string(&mut file_content);
-            let data_result: Result<Vec<RegisteredApp>, ron::de::SpannedError> =
+
+            let data_result: Result<HashMap<String, RegisteredApp>, ron::de::SpannedError> =
                 ron::from_str(&file_content);
 
             if let Ok(data) = data_result {
                 for patch in data {
-                    println!("{:?}", patch);
+                    self.registered_apps.insert(patch.0, patch.1);
                 }
+            } else {
+                return Err("Impossible de charger le fichier des apps installées.".to_string());
             }
         }
+        Ok(())
     }
 
     fn save_registered_apps(&mut self) -> Result<(), String> {
@@ -445,9 +470,93 @@ impl MelatoninLauncher {
     }
 }
 
+fn detect_patch_cached(global_id: &String) -> Option<PathBuf> {
+    if let Some(project_dir) =
+        directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+    {
+        let cach_dir = project_dir.cache_dir();
+
+        let file_path = cach_dir.join(format!("{}.zip", global_id));
+
+        if !file_path.exists() {
+            return None;
+        }
+        Some(file_path)
+    } else {
+        None
+    }
+}
+
+async fn download_patch(app: &RegisteredApp) -> Result<(), String> {
+    if let Some(project_dir) =
+        directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+    {
+        let cach_dir = project_dir.cache_dir();
+
+        let file_path = cach_dir.join(cach_dir.join(format!("{}.zip", app.global_id)));
+
+        if let Ok(data) = reqwest::get(format!(
+            "{}{}",
+            TM_DOMAINE, app.available_patch.download_link
+        ))
+        .await
+        {
+            if let Ok(mut file) = fs::File::create(file_path) {
+                if let Ok(bytes) = data.bytes().await {
+                if file.write_all(&bytes).is_err() {
+                    return Err("Impossible d'écrire le fichier de patch.".to_string());
+                }
+                Ok(())
+            } else {
+                Err("Impossible de lire les données du patch.".to_string())
+            }
+            } else {
+                Err("Impossible d'écrire le fichier de patch.".to_string())
+            }
+        } else {
+            Err("Impossible de télécharger le patch. Veuillez vérifier votre connection à Internet.".to_string())
+        }
+    } else {
+        Err("Impossible de trouver le dossier de cache.".to_string())
+    }
+}
+
+#[tauri::command]
+async fn enable_patch(
+    state: tauri::State<'_, LauncherState>,
+    global_id: String,
+) -> Result<(), String> {
+    let mut core = state.0.lock().unwrap();
+
+    if core.melatonin_info.is_none() {
+        match core.update_melatonin_info() {
+            Ok(_) => (),
+            Err(error) => {
+                return Err(format!("{:?}", error));
+            }
+        }
+    };
+
+    if let Some(app) = core.registered_apps.get(&global_id) {
+        if let Some(path) = detect_patch_cached(&global_id) {
+        } else if let Ok(path) = download_patch(app).await {
+        };
+        Err(
+            "Impossible de télécharger le patch. Veuillez vérifier votre connexion à Internet."
+                .to_string(),
+        )
+    } else {
+        Err("Le jeu semble ne pas exister.".to_string())
+    }
+}
+
 #[tauri::command]
 fn loading_finished(state: tauri::State<'_, LauncherState>) {
     let mut core = state.0.lock().unwrap();
+
+    core.load_registered_apps();
+
+    println!("Loading finished");
 }
 
 struct LauncherState(pub Mutex<MelatoninLauncher>);
