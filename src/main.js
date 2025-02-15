@@ -63,6 +63,14 @@ function add_game(info) {
       base_card_fake.querySelector("#disable-patch-game-button").style.display = "none";
     }
 
+    base_card_fake.querySelector("#enable-patch-game-button").addEventListener("click", () => {
+      invoke("enable_patch").then((msg) => {
+        console.log(msg);
+      }).catch((msg) => {
+        console.error(msg)
+      });
+    });
+
     base_card_fake.querySelector("#add-from-steam-game-button").addEventListener("click", () => {
       base_card_fake.querySelector("#add-from-steam-game-button").classList.add("button-loading");
       base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear";
@@ -79,11 +87,18 @@ function add_game(info) {
           got_error = true;
         }).then(
           () => {
-            setTimeout(() => {
+            if (got_error) setTimeout(() => {
               base_card_fake.querySelector("#add-from-steam-game-button").style.animation = "button-to-loading-reversed 1s ease forwards";
               base_card_fake.querySelector("#manual-add-game-button").style.animation = "dispawn-big-button-reversed 500ms ease forwards";
               base_card_fake.querySelector("#game-scan-info-label").style.display = "none";
-            }, got_error? 6000:0);
+            }, 6000);
+            else {
+              base_card_fake.querySelector("#enable-patch-game-button").style.animation = "dispawn-big-button-reversed 500ms ease forwards";
+              base_card_fake.querySelector("#enable-patch-game-button").style.animation = "button-to-loading 0s linear forwards";
+              base_card_fake.querySelector("#enable-patch-game-button").style.display = ""
+              base_card_fake.querySelector("#enable-patch-game-button").style.animation = "button-to-loading-reversed 1s ease forwards";
+              base_card_fake.querySelector("#add-from-steam-game-button").style.display = "none";
+            }
           }
 
         );
