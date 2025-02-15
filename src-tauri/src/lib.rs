@@ -14,7 +14,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
 const TM_DOMAINE: &str = "https://team-melatonin.fr/";
 
@@ -140,12 +140,12 @@ struct RegisteredApp {
 }
 
 impl MelatoninInfo {
-    fn get_from_remote() -> Result<MelatoninInfo, GetPatchesInfoError> {
-        let patches_info_response = blocking::get(format!("{}infos.json", TM_DOMAINE));
+    async fn get_from_remote() -> Result<MelatoninInfo, GetPatchesInfoError> {
+        let patches_info_response = reqwest::get(format!("{}infos.json", TM_DOMAINE)).await;
 
         match patches_info_response {
             Ok(data) => {
-                let infos: MelatoninInfo = match data.json() {
+                let infos: MelatoninInfo = match data.json().await {
                     Ok(data) => data,
                     Err(error) => {
                         return Err(GetPatchesInfoError::CantReadFile(format!("{}", error)))
@@ -268,14 +268,14 @@ fn get_installed_apps_steam_id() -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-fn register_app_from_steam(
+async fn register_app_from_steam(
     state: tauri::State<'_, LauncherState>,
     global_id: String,
 ) -> Result<(), String> {
-    let mut core = state.0.lock().unwrap();
+    let mut core = state.0.lock().await;
 
     if core.melatonin_info.is_none() {
-        match core.update_melatonin_info() {
+        match core.update_melatonin_info().await {
             Ok(_) => (),
             Err(error) => {
                 return Err(format!("{:?}", error));
@@ -310,19 +310,20 @@ fn register_app_from_steam(
 }
 
 #[tauri::command]
-fn get_remote_available_patches(
+async fn get_remote_available_patches(
     state: tauri::State<'_, LauncherState>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    let mut core = state.0.lock().unwrap();
+    let mut core = state.0.lock().await;
 
     if core.melatonin_info.is_none() {
-        match core.update_melatonin_info() {
+        match core.update_melatonin_info().await {
             Ok(_) => (),
             Err(error) => {
                 return Err(format!("{:?}", error));
             }
         }
     };
+    println!("hello");
 
     if let Some(melatonin_info) = &core.melatonin_info {
         let installed_steam_ids = get_installed_apps_steam_id();
@@ -382,8 +383,8 @@ impl MelatoninLauncher {
         }
     }
 
-    fn update_melatonin_info(&mut self) -> Result<(), GetPatchesInfoError> {
-        let updated = MelatoninInfo::get_from_remote();
+    async fn update_melatonin_info(&mut self) -> Result<(), GetPatchesInfoError> {
+        let updated = MelatoninInfo::get_from_remote().await;
         match updated {
             Ok(info) => {
                 self.melatonin_info = Some(info);
@@ -526,10 +527,10 @@ async fn enable_patch(
     state: tauri::State<'_, LauncherState>,
     global_id: String,
 ) -> Result<(), String> {
-    let mut core = state.0.lock().unwrap();
+    let mut core = state.0.lock().await;
 
     if core.melatonin_info.is_none() {
-        match core.update_melatonin_info() {
+        match core.update_melatonin_info().await {
             Ok(_) => (),
             Err(error) => {
                 return Err(format!("{:?}", error));
@@ -540,6 +541,7 @@ async fn enable_patch(
     if let Some(app) = core.registered_apps.get(&global_id) {
         if let Some(path) = detect_patch_cached(&global_id) {
         } else if let Ok(path) = download_patch(app).await {
+            return Ok(())
         };
         Err(
             "Impossible de télécharger le patch. Veuillez vérifier votre connexion à Internet."
@@ -551,12 +553,14 @@ async fn enable_patch(
 }
 
 #[tauri::command]
-fn loading_finished(state: tauri::State<'_, LauncherState>) {
-    let mut core = state.0.lock().unwrap();
+async fn loading_finished(state: tauri::State<'_, LauncherState>) -> Result<(), String> {
+    let mut core = state.0.lock().await;
 
-    core.load_registered_apps();
+    core.load_registered_apps()?;
 
     println!("Loading finished");
+
+    Ok(())
 }
 
 struct LauncherState(pub Mutex<MelatoninLauncher>);
@@ -570,6 +574,7 @@ pub fn run() {
             get_remote_available_patches,
             loading_finished,
             register_app_from_steam,
+            enable_patch,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
