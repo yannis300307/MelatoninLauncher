@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::File;
+use std::io::Cursor;
 use std::io::Read;
 use std::io::Write;
 use std::path::Path;
@@ -219,6 +220,7 @@ fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
                 let mut app_info: SteamAppInfo = keyvalues_serde::from_reader(file).unwrap();
                 app_info.installdir = Path::new(&folder.path)
                     .join("steamapps")
+                    .join("common")
                     .join(app_info.installdir)
                     .into_os_string()
                     .into_string()
@@ -543,8 +545,26 @@ async fn enable_patch(
     };
 
     if let Some(app) = core.registered_apps.get(&global_id) {
-        if let Some(path) = detect_patch_cached(&global_id) {}
-        let a = download_patch(app).await?;
+        let path: PathBuf;
+        if let Some(path_) = detect_patch_cached(&global_id) {
+            println!("Patch already cached.");
+            path = path_;
+        } else {
+            println!("Downloading patch...");
+            path = download_patch(app).await?;
+            println!("Patch downloaded!");
+        }
+
+        if let Ok(content) = fs::read(path) {
+            if let Err(error) = zip_extract::extract(Cursor::new(content), Path::new(&app.installation_path), true) {
+                return Err(format!("Impossible de décompresser le patch : {:?}", error));
+            }
+            println!("{}", app.installation_path);
+            println!("Installed!");
+        } else {
+            return Err("Impossible de lire le patch. Il est-peut être corompu.".to_string());
+        }
+        
         Ok(())
     } else {
         Err("Le jeu semble ne pas exister.".to_string())
