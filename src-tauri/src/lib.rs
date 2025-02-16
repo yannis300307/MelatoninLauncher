@@ -447,7 +447,7 @@ impl MelatoninLauncher {
         Ok(())
     }
 
-    fn save_registered_apps(&mut self) -> Result<(), String> {
+    fn save_registered_apps(&self) -> Result<(), String> {
         println!("saving registered apps...");
         if let Some(project_dir) =
             directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
@@ -544,7 +544,7 @@ async fn enable_patch(
         }
     };
 
-    if let Some(app) = core.registered_apps.get(&global_id) {
+    if let Some(app) = core.registered_apps.get_mut(&global_id) {
         let path: PathBuf;
         if let Some(path_) = detect_patch_cached(&global_id) {
             println!("Patch already cached.");
@@ -556,10 +556,13 @@ async fn enable_patch(
         }
 
         if let Ok(content) = fs::read(path) {
-            if let Err(error) = zip_extract::extract(Cursor::new(content), Path::new(&app.installation_path), true) {
+            if let Err(error) = zip_extract::extract(Cursor::new(&content), Path::new(&app.installation_path), true) {
                 return Err(format!("Impossible de décompresser le patch : {:?}", error));
             }
-            println!("{}", app.installation_path);
+
+            app.patch_activated = true;
+            core.save_registered_apps()?;
+
             println!("Installed!");
         } else {
             return Err("Impossible de lire le patch. Il est-peut être corompu.".to_string());
