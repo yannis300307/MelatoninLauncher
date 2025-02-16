@@ -488,13 +488,17 @@ fn detect_patch_cached(global_id: &String) -> Option<PathBuf> {
     }
 }
 
-async fn download_patch(app: &RegisteredApp) -> Result<(), String> {
+async fn download_patch(app: &RegisteredApp) -> Result<PathBuf, String> {
     if let Some(project_dir) =
         directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
     {
-        let cach_dir = project_dir.cache_dir();
+        let cache_dir = project_dir.cache_dir();
 
-        let file_path = cach_dir.join(cach_dir.join(format!("{}.zip", app.global_id)));
+        if !Path::exists(cache_dir) {
+            fs::create_dir_all(cache_dir);
+        }
+
+        let file_path = cache_dir.join(cache_dir.join(format!("{}.zip", app.global_id)));
 
         if let Ok(data) = reqwest::get(format!(
             "{}{}",
@@ -502,15 +506,15 @@ async fn download_patch(app: &RegisteredApp) -> Result<(), String> {
         ))
         .await
         {
-            if let Ok(mut file) = fs::File::create(file_path) {
+            if let Ok(mut file) = fs::File::create(&file_path) {
                 if let Ok(bytes) = data.bytes().await {
-                if file.write_all(&bytes).is_err() {
-                    return Err("Impossible d'écrire le fichier de patch.".to_string());
+                    if file.write_all(&bytes).is_err() {
+                        return Err("Impossible d'écrire le fichier de patch.".to_string());
+                    }
+                    Ok(file_path)
+                } else {
+                    Err("Impossible de lire les données du patch.".to_string())
                 }
-                Ok(())
-            } else {
-                Err("Impossible de lire les données du patch.".to_string())
-            }
             } else {
                 Err("Impossible d'écrire le fichier de patch.".to_string())
             }
@@ -539,14 +543,9 @@ async fn enable_patch(
     };
 
     if let Some(app) = core.registered_apps.get(&global_id) {
-        if let Some(path) = detect_patch_cached(&global_id) {
-        } else if let Ok(path) = download_patch(app).await {
-            return Ok(())
-        };
-        Err(
-            "Impossible de télécharger le patch. Veuillez vérifier votre connexion à Internet."
-                .to_string(),
-        )
+        if let Some(path) = detect_patch_cached(&global_id) {}
+        let a = download_patch(app).await?;
+        Ok(())
     } else {
         Err("Le jeu semble ne pas exister.".to_string())
     }

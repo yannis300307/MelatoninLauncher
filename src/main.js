@@ -64,7 +64,7 @@ function add_game(info) {
     }
 
     base_card_fake.querySelector("#enable-patch-game-button").addEventListener("click", () => {
-      invoke("enable_patch").then((msg) => {
+      invoke("enable_patch", {globalId: info["global_id"]}).then((msg) => {
         console.log(msg);
       }).catch((msg) => {
         console.error(msg)
