@@ -556,7 +556,29 @@ async fn enable_patch(
         }
 
         if let Ok(content) = fs::read(path) {
-            if let Err(error) = zip_extract::extract(Cursor::new(&content), Path::new(&app.installation_path), true) {
+            // Save original files
+            if let Some(project_dir) =
+                directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+            {
+                let save_dir = project_dir.cache_dir().join("original_files").join(&app.global_id);
+                fs::create_dir_all(&save_dir);
+                if let Ok(mut zip) = zip::read::ZipArchive::new(Cursor::new(&content)) {
+                    for i in 0..zip.len() {
+                        let mut file = zip.by_index(i).unwrap();
+                        println!("Filename: {}", file.name());
+                        let file_path = Path::new(&app.installation_path).join(file.name());
+                        let dest_path = save_dir.join(file.name());
+                        fs::create_dir_all(dest_path.parent().unwrap());
+                        fs::copy(file_path, dest_path);
+                    }
+                };
+            }
+
+            if let Err(error) = zip_extract::extract(
+                Cursor::new(&content),
+                Path::new(&app.installation_path),
+                true,
+            ) {
                 return Err(format!("Impossible de décompresser le patch : {:?}", error));
             }
 
@@ -567,7 +589,7 @@ async fn enable_patch(
         } else {
             return Err("Impossible de lire le patch. Il est-peut être corompu.".to_string());
         }
-        
+
         Ok(())
     } else {
         Err("Le jeu semble ne pas exister.".to_string())

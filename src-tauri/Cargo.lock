@@ -2288,6 +2288,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tokio",
  "winreg",
+ "zip",
  "zip-extract",
 ]
 
