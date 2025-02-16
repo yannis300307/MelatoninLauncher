@@ -70,8 +70,17 @@ function add_game(info) {
     }
 
     enable_patch_game_button.addEventListener("click", () => {
+      enable_patch_game_button.classList.add("button-loading");
+      enable_patch_game_button.style.animation = "button-to-loading 1s ease forwards, rotate 5s infinite 500ms linear";
       invoke("enable_patch", { globalId: info["global_id"] }).then(() => {
+        setTimeout(() => {
+          enable_patch_game_button.style.animation = "button-to-loading-reversed 1s ease forwards";
+          enable_patch_game_button.classList.remove("button-loading");
 
+          enable_patch_game_button.style.display = "none"
+          disable_patch_game_button.style.animation = "button-to-loading-reversed 1s ease forwards";
+          disable_patch_game_button.style.display = "";
+        }, 1000);
       }).catch((msg) => {
         console.error(msg)
       });
