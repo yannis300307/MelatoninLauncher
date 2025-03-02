@@ -528,6 +528,51 @@ async fn download_patch(app: &RegisteredApp) -> Result<PathBuf, String> {
     }
 }
 
+fn get_local_original_files(app: &RegisteredApp) -> Option<PathBuf> {
+    if let Some(project_dir) =
+        directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
+    {
+        let save_dir = project_dir
+            .cache_dir()
+            .join("original_files")
+            .join(&app.global_id);
+
+        if save_dir.is_dir() {
+            return Some(save_dir)
+        }
+    }
+    None
+}
+
+#[tauri::command]
+async fn disable_patch(
+    state: tauri::State<'_, LauncherState>,
+    global_id: String,
+) -> Result<(), String> {
+    let mut core = state.0.lock().await;
+
+    if core.melatonin_info.is_none() {
+        match core.update_melatonin_info().await {
+            Ok(_) => (),
+            Err(error) => {
+                return Err(format!("{:?}", error));
+            }
+        }
+    };
+
+    if let Some(app) = core.registered_apps.get_mut(&global_id) {
+        if let Some(path) = get_local_original_files(app) {
+            println!("{:?}, {:?}", path, app.installation_path.clone());
+
+            fs::copy(&path, app.installation_path.clone()).unwrap();
+
+        }
+        Ok(())
+    } else {
+        Err("Le jeu semble ne pas exister.".to_string())
+    }
+}
+
 #[tauri::command]
 async fn enable_patch(
     state: tauri::State<'_, LauncherState>,
@@ -560,7 +605,10 @@ async fn enable_patch(
             if let Some(project_dir) =
                 directories::ProjectDirs::from("fr", "TeamMelatonin", "MelatoninLauncher")
             {
-                let save_dir = project_dir.cache_dir().join("original_files").join(&app.global_id);
+                let save_dir = project_dir
+                    .cache_dir()
+                    .join("original_files")
+                    .join(&app.global_id);
                 fs::create_dir_all(&save_dir);
                 if let Ok(mut zip) = zip::read::ZipArchive::new(Cursor::new(&content)) {
                     for i in 0..zip.len() {
@@ -569,7 +617,7 @@ async fn enable_patch(
                         let file_path = Path::new(&app.installation_path).join(file.name());
                         let dest_path = save_dir.join(file.name());
                         fs::create_dir_all(dest_path.parent().unwrap());
-                        fs::copy(file_path, dest_path);
+                        fs::copy(file_path, dest_path); // TODO: extract here
                     }
                 };
             }
@@ -619,6 +667,7 @@ pub fn run() {
             loading_finished,
             register_app_from_steam,
             enable_patch,
+            disable_patch,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
