@@ -2285,6 +2285,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "tokio",
+ "walkdir",
  "winreg",
  "zip",
  "zip-extract",

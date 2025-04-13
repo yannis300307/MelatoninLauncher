@@ -538,7 +538,7 @@ fn get_local_original_files(app: &RegisteredApp) -> Option<PathBuf> {
             .join(&app.global_id);
 
         if save_dir.is_dir() {
-            return Some(save_dir)
+            return Some(save_dir);
         }
     }
     None
@@ -562,11 +562,26 @@ async fn disable_patch(
 
     if let Some(app) = core.registered_apps.get_mut(&global_id) {
         if let Some(path) = get_local_original_files(app) {
-            println!("{:?}, {:?}", path, app.installation_path.clone());
+            for entry in walkdir::WalkDir::new(&path).into_iter().flatten() {
+                if path == entry.path() {
+                    continue;
+                }
+                if Path::is_file(entry.path()) {
+                    let parent_dir = entry.path().parent().expect("Your file system is weird.");
+                    if let Ok(relative_path) = parent_dir.strip_prefix(&path) {
+                        let destination = Path::new(&app.installation_path).join(relative_path);
 
-            fs::copy(&path, app.installation_path.clone()).unwrap();
-
+                        if fs::copy(entry.path(), destination.join(entry.file_name())).is_err() {
+                            return Err("Impossible de copier les fichiers originaux.".to_string());
+                        }
+                    } else {
+                        return Err("Les données du jeu semblent corrompues.".to_string())
+                    }
+                }
+            }
         }
+        app.patch_activated = false;
+        core.save_registered_apps();
         Ok(())
     } else {
         Err("Le jeu semble ne pas exister.".to_string())
