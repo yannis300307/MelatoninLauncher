@@ -218,6 +218,7 @@ fn get_steam_app_info(steam_id: &String) -> Result<SteamAppInfo, String> {
                     }
                 };
                 let mut app_info: SteamAppInfo = keyvalues_serde::from_reader(file).unwrap();
+                println!("{:?}", &app_info.installdir);
                 app_info.installdir = Path::new(&folder.path)
                     .join("steamapps")
                     .join("common")
@@ -263,6 +264,7 @@ fn get_installed_apps_steam_id() -> Result<Vec<String>, String> {
     let mut apps_id: Vec<String> = Vec::new();
 
     for folder in folders.folders.values() {
+        println!("{:?}", folder);
         apps_id.extend(folder.apps.keys().map(|i| i.to_owned()));
     }
 
