@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "melatoninlauncher",
+  "productName": "Melatonin Launcher",
   "version": "0.1.0",
   "identifier": "com.melatoninlauncher.app",
   "build": {
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "melatoninlauncher",
+        "title": "Melatonin Launcher",
         "width": 800,
         "height": 600
       }
